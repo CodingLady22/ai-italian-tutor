@@ -6,6 +6,8 @@ import { UsersService } from './users/users.service';
 import { AuthModule } from './auth/auth.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
+import { ChatModule } from './chat/chat.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -16,7 +18,7 @@ import { ConfigModule } from '@nestjs/config';
       process.env.DATABASE_URL || 'mongodb://localhost:27017/mydatabase'
     ),
     UsersModule, 
-    AuthModule
+    AuthModule, ChatModule, AiModule
   ],
   controllers: [AppController],
   providers: [AppService, UsersService],
