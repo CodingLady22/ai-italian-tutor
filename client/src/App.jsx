@@ -6,19 +6,15 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/login";
+import Register from "./pages/Register";
 
 // Placeholder for Dashboard component
 const Dashboard = () => (
   <div className="p-10 text-2xl">Dashboard (Coming Soon)</div>
 );
-const Register = () => (
-  <div className="p-10 text-2xl">Register Page (Coming Soon)</div>
-);
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <div>Loading...</div>;
+  const { user } = useAuth();
 
   return user ? children : <Navigate to="/login" />;
 };
@@ -30,7 +26,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/signup" element={<Register />} />
 
             <Route
               path="/dashboard"

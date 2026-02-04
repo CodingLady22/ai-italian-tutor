@@ -1,22 +1,26 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import { LogIn } from "lucide-react";
+import { UserPlus } from "lucide-react";
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [level, setLevel] = useState("A1");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    const result = await login(email, password);
+    // Calling register() from context
+    const result = await register(name, email, password, level);
+
     if (result.success) {
-      navigate("/dashboard");
+      navigate("/login");
     } else {
       setError(result.message);
     }
@@ -27,12 +31,12 @@ export default function Login() {
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="flex justify-center mb-6">
           <div className="bg-green-600 p-3 rounded-full">
-            <LogIn className="w-8 h-8 text-white" />
+            <UserPlus className="w-8 h-8 text-white" />
           </div>
         </div>
 
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
-          Bentornato!
+          Create Account
         </h2>
 
         {error && (
@@ -42,6 +46,19 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Name
+            </label>
+            <input
+              type="text"
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email Address
@@ -62,24 +79,43 @@ export default function Login() {
             <input
               type="password"
               required
+              minLength={8}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Italian Level
+            </label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+            >
+              <option value="A1">A1 - Beginner</option>
+              <option value="A2">A2 - Elementary</option>
+              <option value="B1">B1 - Intermediate</option>
+              <option value="B2">B2 - Upper Intermediate</option>
+              <option value="C1">C1 - Advanced</option>
+              <option value="C2">C2 - Mastery</option>
+            </select>
+          </div>
+
           <button
             type="submit"
             className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition duration-200 font-medium"
           >
-            Accedi (Login)
+            Sign Up
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-green-600 hover:underline">
-            Sign up here
+          Already have an account?{" "}
+          <Link to="/login" className="text-green-600 hover:underline">
+            Login here
           </Link>
         </p>
       </div>
