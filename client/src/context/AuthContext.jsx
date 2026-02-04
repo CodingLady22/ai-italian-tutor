@@ -31,9 +31,10 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const register = async (email, password, level) => {
+  const register = async (name, email, password, level) => {
     try {
-      await api.post("/auth/register", {
+      await api.post("/auth/signup", {
+        name,
         email,
         password,
         italian_level: level,
