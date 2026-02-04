@@ -28,9 +28,11 @@ export class AuthService {
             italian_level: registerDto.italian_level || 'A1',
         })
 
-        const userObjest: User = user.toObject()
-        const { password, ...result} = userObjest
-        return result
+        const payload = { name: user.name, email: user.email, sub: user._id}
+
+        return {
+            access_token: this.jwtService.sign(payload),
+        };
     }
 
     async login(loginDto: LoginDto) {

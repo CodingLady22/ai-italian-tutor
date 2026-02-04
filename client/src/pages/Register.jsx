@@ -20,7 +20,7 @@ export default function Register() {
     const result = await register(name, email, password, level);
 
     if (result.success) {
-      navigate("/login");
+      navigate("/dashboard");
     } else {
       setError(result.message);
     }

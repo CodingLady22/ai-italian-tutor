@@ -33,13 +33,23 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, level) => {
     try {
-      await api.post("/auth/signup", {
+      const response = await api.post("/auth/signup", {
         name,
         email,
         password,
         italian_level: level,
       });
-      return { success: true };
+      const { access_token } = response.data;
+
+      if (access_token) {
+        localStorage.setItem("token", access_token);
+        setUser({ token: access_token });
+        return { success: true };
+      }
+      return {
+        success: false,
+        message: "Registration failed: No token received",
+      };
     } catch (error) {
       return {
         success: false,
