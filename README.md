@@ -33,7 +33,7 @@ Server runs on http://localhost:3000.
 
 ### 🔌 API Endpoints
 #### Auth
-- POST /auth/register - Create account
+- POST /auth/signup - Create account
 - POST /auth/login - Get JWT Access Token
 
 #### Chat
