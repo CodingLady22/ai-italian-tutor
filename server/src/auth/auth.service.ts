@@ -32,6 +32,13 @@ export class AuthService {
 
         return {
             access_token: this.jwtService.sign(payload),
+
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: (user as any).name.split(' ')[0],
+                italian_level: user.italian_level
+            }
         };
     }
 
@@ -47,6 +54,15 @@ export class AuthService {
         }
 
         const payload = { name: user.name, email: user.email, sub: user._id}
-        return { access_token: this.jwtService.sign(payload) }
+        return { 
+            access_token: this.jwtService.sign(payload), 
+            
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: (user as any).name.split(' ')[0],
+                italian_level: user.italian_level
+            }
+        }
     }
 }
