@@ -28,7 +28,8 @@ export class ChatService {
   }
 
   async getSessionMessages(sessionId: string) {
-    return this.sessionModel.find({ session_id: sessionId }).sort({ createdAt: 1 }).exec();
+    // return this.sessionModel.find({ session_id: sessionId }).sort({ createdAt: 1 }).exec();
+    return this.messageModel.find({ session_id: sessionId }).sort({ createdAt: 1 }).exec();
   }
 
   async sendMessage(userId: string, dto: sendMessageDto) {
@@ -68,5 +69,20 @@ export class ChatService {
     await aiMsg.save()
 
     return aiMsg
+  }
+
+  async deleteSession(userId: string, sessionId: string) {
+    const session = await this.sessionModel.findOne({ 
+    _id: sessionId, 
+    user_id: userId 
+  });
+  
+  if (!session) throw new NotFoundException('Session not found');
+  
+  await this.messageModel.deleteMany({ session_id: sessionId });
+  
+  await this.sessionModel.deleteOne({ _id: sessionId });
+  
+  return { success: true };
   }
 }
