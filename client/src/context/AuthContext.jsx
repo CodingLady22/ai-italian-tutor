@@ -6,16 +6,23 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token");
-    return token ? { token } : null;
+    const storedUser = localStorage.getItem("user_data");
+
+    if (token) {
+      return storedUser ? { token, ...JSON.parse(storedUser) } : { token };
+    }
+    return null;
   });
 
   const login = async (email, password) => {
     try {
       const response = await api.post("/auth/login", { email, password });
-      const { access_token } = response.data;
+      const { access_token, user: userData } = response.data;
 
       localStorage.setItem("token", access_token);
-      setUser({ token: access_token });
+      localStorage.setItem("user_data", JSON.stringify(userData));
+
+      setUser({ token: access_token, ...userData });
       return { success: true };
     } catch (error) {
       console.error("Login failed:", error);
@@ -28,6 +35,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user_data");
     setUser(null);
   };
 
@@ -39,11 +47,12 @@ export const AuthProvider = ({ children }) => {
         password,
         italian_level: level,
       });
-      const { access_token } = response.data;
+      const { access_token, user: userData } = response.data;
 
       if (access_token) {
         localStorage.setItem("token", access_token);
-        setUser({ token: access_token });
+        localStorage.setItem("user_data", JSON.stringify(userData));
+        setUser({ token: access_token, ...userData });
         return { success: true };
       }
       return {

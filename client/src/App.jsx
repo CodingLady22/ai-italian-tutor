@@ -7,11 +7,7 @@ import {
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/login";
 import Register from "./pages/Register";
-
-// Placeholder for Dashboard component
-const Dashboard = () => (
-  <div className="p-10 text-2xl">Dashboard (Coming Soon)</div>
-);
+import Dashboard from "./pages/Dashboard";
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
