@@ -30,9 +30,11 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="flex justify-center mb-6">
-          <div className="bg-green-600 p-3 rounded-full">
-            <UserPlus className="w-8 h-8 text-white" />
-          </div>
+          <Link to="/">
+            <div className="bg-green-600 p-3 rounded-full">
+              <UserPlus className="w-8 h-8 text-white" />
+            </div>
+          </Link>
         </div>
 
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">
