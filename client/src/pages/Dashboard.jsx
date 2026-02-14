@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [newSessionData, setNewSessionData] = useState({
     level: "A1",
     mode: "topic",
-    focus_area: "Ordering coffee",
+    focus_area: "",
   });
 
   // load chat history
@@ -38,7 +38,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleNewChat = () => {
@@ -58,8 +58,11 @@ export default function Dashboard() {
 
     try {
       const res = await api.post("/chat/start-session", newSessionData);
-      setSessions([res.data, ...sessions]);
-      setSelectedSession(res.data);
+
+      const newSession = res.data.session;
+
+      setSessions([newSession, ...sessions]);
+      setSelectedSession(newSession);
     } catch (err) {
       console.error("Failed to create session", err);
       setCreateError("Failed to start session. Please try again.");
