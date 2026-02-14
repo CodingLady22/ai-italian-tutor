@@ -12,7 +12,7 @@ export class ChatService {
   constructor(
     @InjectModel(ChatSession.name) private sessionModel: Model<ChatSessionDocument>,
     @InjectModel(ChatMessage.name) private messageModel: Model<ChatMessageDocument>,
-    private aiService: AiService,
+    private authAiService: AiService,
   ) {}
 
   async startSession(userId: string, dto: CreateChatDto) {
@@ -20,7 +20,26 @@ export class ChatService {
       user_id: userId,
       ...dto
     })
-    return session.save();
+    const savedSession = await session.save();
+
+    const initialMessage = await this.authAiService.generateResponse(
+      [],
+      `Inizia la conversazione come tutor amichevole. Il livello è ${dto.level}, ${dto.mode === 'grammar' ? 'insegneremo' : 'parleremo di'}: ${dto.focus_area}. Saluta e fai una domanda per iniziare.`,
+      // `Per favore, inizia la conversazione presentandoti come tutor e introducendo il nostro argomento: ${dto.focus_area}.`,
+      { level: dto.level, focus_area: dto.focus_area }
+    );
+
+    const firstMsg = new this.messageModel({
+      session_id: savedSession._id,
+      sender: 'ai',
+      content: initialMessage,
+    });
+    await firstMsg.save()
+
+    return {
+      session: savedSession,
+      firstMessage: firstMsg
+    };
   }
 
   async getUserSessions(userId: string) {
@@ -54,7 +73,7 @@ export class ChatService {
       parts: [{ text: msg.content }],
     }))
 
-    const aiResponseText = await this.aiService.generateResponse(
+    const aiResponseText = await this.authAiService.generateResponse(
       history,
       dto.message,
       { level: session.level, focus_area: session.focus_area}

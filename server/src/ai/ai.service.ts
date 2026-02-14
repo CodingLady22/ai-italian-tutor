@@ -16,7 +16,7 @@ export class AiService {
         currentMessage: string,
         context: { level: string, focus_area: string }
     ): Promise<string> {
-        const systemPrompt = `You are a friendly Italian language tutor.
+        const systemPrompt = `You are a friendly Italian language tutor named "Lingua Mente".
             The student's level is: ${context.level}.
             The current focus is: ${context.focus_area}.
       
@@ -25,6 +25,7 @@ export class AiService {
             2. If the user makes a grammar mistake relevant to ${context.focus_area}, gently correct them in English, then continue in Italian.
             3. Keep responses concise (max 2-3 sentences).
             4. Be encouraging and helpful.
+            5.  If the history is empty, you are initiating the conversation. Introduce yourself briefly and ask an opening question about ${context.focus_area}.
         `;
 
             // Start a chat session with the history
@@ -44,7 +45,7 @@ export class AiService {
             return result.text || '';
         } catch (error) {
             console.error('Error calling Gemini API:', error);
-            return `Scusa, I am having trouble responding right now. Let's try again later.`;
+            return `Scusa, ho un piccolo problema tecnico. Let's try again later.`;
             
         }
     }
