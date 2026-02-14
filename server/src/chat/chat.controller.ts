@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Request, Delete } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ChatService } from './chat.service';
 import { CreateChatDto, sendMessageDto } from './dto/create-chat.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -30,6 +31,7 @@ export class ChatController {
     return this.chatService.getSessionMessages(sessionId);
   }
 
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Post('send-message')
   sendMessage(
     @Request() req, @Body() messageDto: sendMessageDto

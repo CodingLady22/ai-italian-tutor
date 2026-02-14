@@ -2,6 +2,8 @@ import {
     IsString,
     IsNotEmpty,
     IsMongoId,
+    MaxLength,
+    MinLength
 } from 'class-validator';
 
 export class CreateChatDto {
@@ -21,6 +23,8 @@ export class CreateChatDto {
 export class sendMessageDto {
     @IsMongoId()
     @IsNotEmpty()
+    @MaxLength(1000)
+    @MinLength(1)
     sessionId: string;
 
     @IsString()
