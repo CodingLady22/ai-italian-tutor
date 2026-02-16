@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: 'ai-italian-tutor-production.up.railway.app',
+    baseURL: 'https://ai-italian-tutor-production.up.railway.app',
     headers: {
         "Content-Type": "application/json"
     }
