@@ -2,6 +2,8 @@
 
 A full-stack application designed to help users practice Italian through conversation with an AI tutor. The application allows users to practice specific grammatical concepts (e.g., Passato Prossimo) or real-world topics (e.g., Ordering Coffee) based on their skill level.
 
+Live Site: Click<a href="https://ai-italian-tutor.vercel.app/">here</a>
+
 ### 🤖 Features (MVP)
 - User Authentication: Secure signup and login with JWT.
 - Customizable Practice: Select your proficiency level (A1-C2), mode (Grammar vs. Topic), and specific focus area.
