@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
 
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -34,6 +34,18 @@ export default function Dashboard() {
       }
     };
     fetchSessions();
+
+    // handle initial resize/check
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const handleLogout = () => {
@@ -63,6 +75,8 @@ export default function Dashboard() {
 
       setSessions([newSession, ...sessions]);
       setSelectedSession(newSession);
+      // close sidebar on mobile after creating session
+      if (window.innerWidth < 1024) setSidebarOpen(false);
     } catch (err) {
       console.error("Failed to create session", err);
       setCreateError("Failed to start session. Please try again.");
@@ -85,18 +99,18 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
+      {/* sidebar */}
       <div
         className={`${
           sidebarOpen ? "w-80" : "w-0"
-        } bg-gray-900 text-white transition-all duration-300 flex flex-col relative z-10`}
+        } bg-gray-900 text-white transition-all duration-300 flex flex-col relative z-10 overflow-hidden`}
       >
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <h1 className="font-bold text-xl tracking-tight">🇮🇹 AI Tutor</h1>
           <p className="text-xs text-gray-400 mt-1">
             Ciao, {user?.name || user?.email?.split("@")[0]}!
           </p>
-          {/* Mobile close button */}
+          {/* mobile close button */}
           <button
             onClick={() => setSidebarOpen(false)}
             className="hover:text-gray-300"
