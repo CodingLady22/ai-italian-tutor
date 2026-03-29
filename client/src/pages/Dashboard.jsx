@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, Plus, MessageSquare, Menu, X, Loader2 } from "lucide-react";
 import api from "../api/axios";
 import ChatInterface from "../components/ChatInterface";
+import { grammarTopics } from "../api/grammarTopics";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -22,6 +23,11 @@ export default function Dashboard() {
     mode: "topic",
     focus_area: "",
   });
+
+  // reset focus area when level or mode changes
+  useEffect(() => {
+    setNewSessionData((prev) => ({ ...prev, focus_area: "" }));
+  }, [newSessionData.level, newSessionData.mode]);
 
   // load chat history
   useEffect(() => {
@@ -282,23 +288,45 @@ export default function Dashboard() {
                       ? "What do you want to talk about?"
                       : "Which grammar rule?"}
                   </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder={
-                      newSessionData.mode === "topic"
-                        ? "e.g., Ordering Pizza, Travel"
-                        : "e.g., Past Tense, Prepositions"
-                    }
-                    value={newSessionData.focus_area}
-                    onChange={(e) =>
-                      setNewSessionData({
-                        ...newSessionData,
-                        focus_area: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
-                  />
+                  {newSessionData.mode === "grammar" &&
+                  grammarTopics[newSessionData.level] ? (
+                    <select
+                      required
+                      value={newSessionData.focus_area}
+                      onChange={(e) =>
+                        setNewSessionData({
+                          ...newSessionData,
+                          focus_area: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                    >
+                      <option value="">Select a topic</option>
+                      {grammarTopics[newSessionData.level].map((topic) => (
+                        <option key={topic} value={topic}>
+                          {topic}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      required
+                      placeholder={
+                        newSessionData.mode === "topic"
+                          ? "e.g., Ordering Pizza, Travel"
+                          : "e.g., Past Tense, Prepositions"
+                      }
+                      value={newSessionData.focus_area}
+                      onChange={(e) =>
+                        setNewSessionData({
+                          ...newSessionData,
+                          focus_area: e.target.value,
+                        })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                    />
+                  )}
                 </div>
 
                 <button
