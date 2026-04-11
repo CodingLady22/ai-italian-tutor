@@ -5,10 +5,11 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -34,17 +35,18 @@ function App() {
       <AuthProvider>
         <Router>
           <Routes>
-            <Route
-              path="/"
-              element={
-                <PublicRoute>
-                  <LandingPage />
-                </PublicRoute>
-              }
-            />
+            <Route path="/" element={<LandingPage />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Register />} />
+            <Route
+              path="/verify"
+              element={
+                <PublicRoute>
+                  <VerifyEmail />
+                </PublicRoute>
+              }
+            />
 
             <Route
               path="/dashboard"
