@@ -8,6 +8,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -15,12 +16,12 @@ import { AiModule } from './ai/ai.module';
       isGlobal: true,
     }),
     MongooseModule.forRoot(
-      process.env.DATABASE_URL || 'mongodb://localhost:27017/mydatabase'
+      process.env.DB_URL || 'mongodb://localhost:27017/mydatabase'
     ),
     UsersModule, 
-    AuthModule, ChatModule, AiModule
+    AuthModule, ChatModule, AiModule, MailModule
   ],
   controllers: [AppController],
-  providers: [AppService, UsersService],
+  providers: [AppService],
 })
 export class AppModule {}

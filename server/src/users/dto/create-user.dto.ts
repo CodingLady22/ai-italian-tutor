@@ -3,5 +3,7 @@ export class CreateUserDto {
     name: string;
     email: string;
     password: string;
-    italian_level: string
-}
+    italian_level: string;
+    isVerified?: boolean;
+    verificationToken?: string;
+    }

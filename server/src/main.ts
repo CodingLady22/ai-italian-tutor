@@ -5,8 +5,10 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
   app.enableCors({
-    origin: ['https://ai-italian-tutor.vercel.app', 'http://localhost:5173'],
+    origin: [frontendUrl, 'http://localhost:5173'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true
   });
