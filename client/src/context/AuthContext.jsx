@@ -47,22 +47,15 @@ export const AuthProvider = ({ children }) => {
         password,
         italian_level: level,
       });
-      const { access_token, user: userData } = response.data;
-
-      if (access_token) {
-        localStorage.setItem("token", access_token);
-        localStorage.setItem("user_data", JSON.stringify(userData));
-        setUser({ token: access_token, ...userData });
-        return { success: true };
-      }
-      return {
-        success: false,
-        message: "Registration failed: No token received",
+      
+      return { 
+        success: true, 
+        message: response.data.message || "Registration successful! Please check your email to verify your account." 
       };
     } catch (error) {
       return {
         success: false,
-        message: error.response?.date?.message || "Registration failed",
+        message: error.response?.data?.message || "Registration failed",
       };
     }
   };
