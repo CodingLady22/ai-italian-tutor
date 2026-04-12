@@ -20,4 +20,15 @@ export class UsersService {
     async findOneById(id: string): Promise<UserDocument | null> {
         return this.userModel.findById(id).exec()
     }
+
+    async findByVerificationToken(token: string): Promise<UserDocument | null> {
+        return this.userModel.findOne({ verificationToken: token }).exec()
+    }
+
+    async verifyUser(id: string): Promise<UserDocument | null> {
+        return this.userModel.findByIdAndUpdate(id, {
+            isVerified: true,
+            verificationToken: null
+        }, { new: true }).exec()
+    }
 }
