@@ -39,6 +39,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (newUserData) => {
+    const updatedUser = { ...user, ...newUserData };
+    setUser(updatedUser);
+
+    // token not stored in user_data in localStorage
+    const { token: _, ...dataToStore } = updatedUser;
+    localStorage.setItem("user_data", JSON.stringify(dataToStore));
+  };
+
   const register = async (name, email, password, level) => {
     try {
       const response = await api.post("/auth/signup", {
@@ -47,10 +56,12 @@ export const AuthProvider = ({ children }) => {
         password,
         italian_level: level,
       });
-      
-      return { 
-        success: true, 
-        message: response.data.message || "Registration successful! Please check your email to verify your account." 
+
+      return {
+        success: true,
+        message:
+          response.data.message ||
+          "Registration successful! Please check your email to verify your account.",
       };
     } catch (error) {
       return {
@@ -61,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
