@@ -4,17 +4,25 @@ import { GoogleGenAI } from '@google/genai';
 
 @Injectable()
 export class AiService {
-    private client: GoogleGenAI;
+    private defaultClient: GoogleGenAI;
 
     constructor(private configService: ConfigService) {
         const apiKey = this.configService.getOrThrow<string>('GOOGLE_API_KEY');
-        this.client = new GoogleGenAI({ apiKey });
+        this.defaultClient = new GoogleGenAI({ apiKey });
+    }
+
+    private getClient(apiKey?: string): GoogleGenAI {
+        if (apiKey) {
+            return new GoogleGenAI({ apiKey });
+        }
+        return this.defaultClient;
     }
 
     async generateResponse(
         history: { role: string; parts: { text: string }[] }[],
         currentMessage: string,
-        context: { level: string, focus_area: string }
+        context: { level: string, focus_area: string },
+        apiKey?: string
     ): Promise<string> {
         const systemPrompt = `You are a friendly Italian language tutor named "Lingua Mente".
             The student's level is: ${context.level}.
@@ -35,8 +43,9 @@ export class AiService {
             5. Respond primarily in Italian, appropriate for their ${context.level}.
         `;
 
+        const client = this.getClient(apiKey);
             // Start a chat session with the history
-        const chat = this.client.chats.create({
+        const chat = client.chats.create({
             model: 'gemini-2.5-flash-lite',
             config: {
                 systemInstruction: systemPrompt,

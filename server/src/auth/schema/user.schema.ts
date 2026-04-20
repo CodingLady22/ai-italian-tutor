@@ -23,6 +23,9 @@ export class User {
 
     @Prop()
     verificationToken?: string
+
+    @Prop()
+    geminiApiKey?: string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

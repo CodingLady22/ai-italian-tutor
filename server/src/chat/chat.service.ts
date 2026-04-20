@@ -5,6 +5,7 @@ import { ChatSession, ChatSessionDocument } from './schema/chat-session.schema';
 import { ChatMessage, ChatMessageDocument } from './schema/chat-message.schema';
 import { AiService } from '../ai/ai.service';
 import { CreateChatDto, sendMessageDto } from './dto/create-chat.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ChatService {
@@ -13,9 +14,11 @@ export class ChatService {
     @InjectModel(ChatSession.name) private sessionModel: Model<ChatSessionDocument>,
     @InjectModel(ChatMessage.name) private messageModel: Model<ChatMessageDocument>,
     private authAiService: AiService,
+    private usersService: UsersService,
   ) {}
 
   async startSession(userId: string, dto: CreateChatDto) {
+    const user = await this.usersService.findOneById(userId);
     const session = new this.sessionModel({
       user_id: userId,
       ...dto
@@ -26,7 +29,8 @@ export class ChatService {
       [],
       `Inizia la conversazione come tutor amichevole. Il livello è ${dto.level}, ${dto.mode === 'grammar' ? 'insegneremo' : 'parleremo di'}: ${dto.focus_area}. Saluta e fai una domanda per iniziare.`,
       // `Per favore, inizia la conversazione presentandoti come tutor e introducendo il nostro argomento: ${dto.focus_area}.`,
-      { level: dto.level, focus_area: dto.focus_area }
+      { level: dto.level, focus_area: dto.focus_area },
+      user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     );
 
     const firstMsg = new this.messageModel({
@@ -55,6 +59,8 @@ export class ChatService {
     const session = await this.sessionModel.findOne({ _id: dto.sessionId, user_id: userId})
     if(!session) throw new NotFoundException('Chat session not found');
 
+    const user = await this.usersService.findOneById(userId);
+
     const userMsg = new this.messageModel({
       session_id: dto.sessionId,
       sender: 'user',
@@ -76,7 +82,8 @@ export class ChatService {
     const aiResponseText = await this.authAiService.generateResponse(
       history,
       dto.message,
-      { level: session.level, focus_area: session.focus_area}
+      { level: session.level, focus_area: session.focus_area},
+      user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     )
 
     const aiMsg = new this.messageModel({
