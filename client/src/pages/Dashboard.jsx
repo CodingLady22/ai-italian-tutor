@@ -1,13 +1,24 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { LogOut, Plus, MessageSquare, Menu, X, Loader2 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  LogOut,
+  Plus,
+  MessageSquare,
+  Menu,
+  X,
+  Loader2,
+  Settings,
+  Key,
+  AlertCircle,
+  Save,
+} from "lucide-react";
 import api from "../api/axios";
 import ChatInterface from "../components/ChatInterface";
 import { grammarTopics } from "../api/grammarTopics";
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [sessions, setSessions] = useState([]);
@@ -16,6 +27,11 @@ export default function Dashboard() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [isSavingKey, setIsSavingKey] = useState(false);
+  const [saveMessage, setSaveMessage] = useState({ type: "", text: "" });
 
   // new session from state
   const [newSessionData, setNewSessionData] = useState({
@@ -57,6 +73,32 @@ export default function Dashboard() {
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleSaveApiKey = async (e) => {
+    e.preventDefault();
+    if (!apiKeyInput) {
+      setSaveMessage({ type: "error", text: "Please enter an API key." });
+      return;
+    }
+    setIsSavingKey(true);
+    setSaveMessage({ type: "", text: "" });
+
+    try {
+      await api.put("/users/api-key", { apiKey: apiKeyInput });
+      updateUser({ hasApiKey: true });
+      setSaveMessage({ type: "success", text: "API Key saved successfully!" });
+      setApiKeyInput("");
+      setTimeout(() => setIsSettingsOpen(false), 1500);
+    } catch (err) {
+      console.error("Failed to save API key", err);
+      setSaveMessage({
+        type: "error",
+        text: "Failed to save API key. Please try again.",
+      });
+    } finally {
+      setIsSavingKey(false);
+    }
   };
 
   const handleNewChat = () => {
@@ -105,6 +147,86 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div className="flex items-center gap-2">
+                <Settings className="text-gray-600" size={20} />
+                <h3 className="font-bold text-gray-900">Settings</h3>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleSaveApiKey} className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Key size={14} /> Gemini API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder={
+                      user?.hasApiKey
+                        ? "•••••••••••••••• (Saved)"
+                        : "Enter your Gemini API Key"
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
+                  />
+                  <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                    Get your free API key from the{" "}
+                    <a
+                      href="https://aistudio.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 hover:underline font-medium"
+                    >
+                      Google AI Studio
+                    </a>
+                    . Your key is stored securely and used only for your own
+                    requests.{" "}
+                    <Link
+                      to="/api-key-guide"
+                      className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
+                    >
+                      (View Step-by-Step Guide)
+                    </Link>
+                  </p>
+                </div>
+
+                {saveMessage.text && (
+                  <div
+                    className={`p-3 rounded-lg text-xs font-medium ${saveMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                  >
+                    {saveMessage.text}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSavingKey}
+                  className="w-full bg-gray-900 text-white py-2.5 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                >
+                  {isSavingKey ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                  Save API Key
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* sidebar */}
       <div
         className={`${
@@ -113,13 +235,15 @@ export default function Dashboard() {
       >
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <h1 className="font-bold text-xl tracking-tight">🇮🇹 AI Tutor</h1>
-          <p className="text-xs text-gray-400 mt-1">
-            Ciao, {user?.name || user?.email?.split("@")[0]}!
-          </p>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">
+              Ciao, {user?.name || user?.email?.split("@")[0]}!
+            </p>
+          </div>
           {/* mobile close button */}
           <button
             onClick={() => setSidebarOpen(false)}
-            className="hover:text-gray-300"
+            className="lg:hidden hover:text-gray-300"
           >
             <X size={20} />
           </button>
@@ -128,57 +252,74 @@ export default function Dashboard() {
         <div className="p-4">
           <button
             onClick={handleNewChat}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md shadow-green-900/20"
           >
             <Plus size={18} /> New Chat
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
             History
           </p>
-          {sessions.map((session) => (
-            <div key={session._id} className="relative group">
-              <button
-                key={session.id}
-                onClick={() => {
-                  setSelectedSession(session);
-                  if (window.innerWidth < 1024) setSidebarOpen(false);
-                }}
-                className={`w-full text-left p-3 rounded-lg text-sm transition-colors flex items-center gap-3 ${
-                  selectedSession?._id === session._id
-                    ? "bg-gray-800 text-white border border-gray-700"
-                    : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
-                }`}
-              >
-                <MessageSquare size={16} className="shrink-0" />
-                <div className="truncate flex-1">
-                  <div className="font-medium truncate">
-                    {session.focus_area}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-0.5 capitalize">
-                    {session.mode} • {session.level}
-                  </div>
-                </div>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteSession(session._id);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity"
-              >
-                <X size={16} />
-              </button>
+          {sessions.length === 0 ? (
+            <div className="text-center py-8 px-4">
+              <MessageSquare
+                className="mx-auto text-gray-700 mb-2 opacity-20"
+                size={32}
+              />
+              <p className="text-gray-500 text-xs italic">
+                No conversations yet
+              </p>
             </div>
-          ))}
+          ) : (
+            sessions.map((session) => (
+              <div key={session._id} className="relative group">
+                <button
+                  onClick={() => {
+                    setSelectedSession(session);
+                    if (window.innerWidth < 1024) setSidebarOpen(false);
+                  }}
+                  className={`w-full text-left p-3 rounded-lg text-sm transition-all flex items-center gap-3 ${
+                    selectedSession?._id === session._id
+                      ? "bg-gray-800 text-white ring-1 ring-gray-700"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+                  }`}
+                >
+                  <MessageSquare size={16} className="shrink-0 opacity-60" />
+                  <div className="truncate flex-1">
+                    <div className="font-medium truncate">
+                      {session.focus_area}
+                    </div>
+                    <div className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-tighter">
+                      {session.mode} • {session.level}
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteSession(session._id);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all p-1"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))
+          )}
         </div>
 
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800 space-y-2">
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
+          >
+            <Settings size={18} /> Settings
+          </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full"
+            className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
           >
             <LogOut size={18} /> Sign Out
           </button>
@@ -191,10 +332,27 @@ export default function Dashboard() {
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="absolute top-4 left-4 z-20 bg-gray-900 text-white p-2 rounded-md shadow-lg hover:bg-gray-800"
+            className="absolute top-4 left-4 z-20 bg-gray-900 text-white p-2 rounded-md shadow-lg hover:bg-gray-800 lg:hidden"
           >
             <Menu size={20} />
           </button>
+        )}
+
+        {/* API Key missing warning */}
+        {!user?.hasApiKey && !selectedSession && (
+          <div className="bg-amber-50 border-b border-amber-100 p-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
+            <AlertCircle size={16} />
+            <span>
+              Please{" "}
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="font-bold underline"
+              >
+                add your Gemini API Key
+              </button>{" "}
+              in Settings to start practicing.
+            </span>
+          </div>
         )}
 
         {selectedSession ? (
@@ -232,7 +390,7 @@ export default function Dashboard() {
                         level: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                   >
                     {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => (
                       <option key={l} value={l}>
@@ -244,7 +402,7 @@ export default function Dashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mode
+                    Practice Mode
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
@@ -255,9 +413,9 @@ export default function Dashboard() {
                           mode: "topic",
                         })
                       }
-                      className={`py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      className={`py-2.5 rounded-lg border text-sm font-semibold transition-all ${
                         newSessionData.mode === "topic"
-                          ? "bg-green-50 border-green-500 text-green-700"
+                          ? "bg-green-600 border-green-600 text-white shadow-md shadow-green-200"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -271,9 +429,9 @@ export default function Dashboard() {
                           mode: "grammar",
                         })
                       }
-                      className={`py-2 rounded-lg border text-sm font-medium transition-colors ${
+                      className={`py-2.5 rounded-lg border text-sm font-semibold transition-all ${
                         newSessionData.mode === "grammar"
-                          ? "bg-green-50 border-green-500 text-green-700"
+                          ? "bg-green-600 border-green-600 text-white shadow-md shadow-green-200"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
@@ -299,7 +457,7 @@ export default function Dashboard() {
                           focus_area: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                     >
                       <option value="">Select a topic</option>
                       {grammarTopics[newSessionData.level].map((topic) => (
@@ -324,7 +482,7 @@ export default function Dashboard() {
                           focus_area: e.target.value,
                         })
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                     />
                   )}
                 </div>
@@ -332,7 +490,7 @@ export default function Dashboard() {
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-sm"
+                  className="w-full bg-green-600 text-white py-3.5 rounded-lg font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2"
                 >
                   {isCreating ? (
                     <>

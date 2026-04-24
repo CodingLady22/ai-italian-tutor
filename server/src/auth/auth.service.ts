@@ -41,8 +41,9 @@ export class AuthService {
             user: {
                 _id: user._id,
                 email: user.email,
-                name: (user as any).name.split(' ')[0],
-                italian_level: user.italian_level
+                name: user.name.split(' ')[0],
+                italian_level: user.italian_level,
+                hasApiKey: !!user.geminiApiKey
             }
         };
     }
@@ -79,8 +80,9 @@ export class AuthService {
             user: {
                 _id: user._id,
                 email: user.email,
-                name: (user as any).name.split(' ')[0],
-                italian_level: user.italian_level
+                name: user.name.split(' ')[0],
+                italian_level: user.italian_level,
+                hasApiKey: !!user.geminiApiKey
             }
         }
     }

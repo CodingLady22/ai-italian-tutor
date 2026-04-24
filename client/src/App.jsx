@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import ApiKeyGuide from "./pages/ApiKeyGuide";
 import LandingPage from "./pages/LandingPage";
 import VerifyEmail from "./pages/VerifyEmail";
 
@@ -53,6 +54,15 @@ function App() {
               element={
                 <PrivateRoute>
                   <Dashboard />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/api-key-guide"
+              element={
+                <PrivateRoute>
+                  <ApiKeyGuide />
                 </PrivateRoute>
               }
             />
