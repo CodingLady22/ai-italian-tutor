@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   LogOut,
   Plus,
@@ -191,7 +191,13 @@ export default function Dashboard() {
                       Google AI Studio
                     </a>
                     . Your key is stored securely and used only for your own
-                    requests.
+                    requests.{" "}
+                    <Link
+                      to="/api-key-guide"
+                      className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
+                    >
+                      (View Step-by-Step Guide)
+                    </Link>
                   </p>
                 </div>
 
