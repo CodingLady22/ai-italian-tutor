@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, User, Bot, Loader2, Volume2, Mic, MicOff } from "lucide-react";
+import { Send, User, Bot, Loader2, Volume2, Mic, MicOff, AlertCircle } from "lucide-react";
 import api from "../api/axios";
+import { useAuth } from "../context/AuthContext";
 
-export default function ChatInterface({ session }) {
-  console.log("ChatInterface received session:", session); // ADD THIS
+export default function ChatInterface({ session, onLimitReached }) {
+  const { user, updateUser } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,14 +57,12 @@ export default function ChatInterface({ session }) {
 
   const speak = (text, messageId) => {
     if ("speechSynthesis" in window) {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       setCurrentlySpeaking(null);
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = "it-IT";
 
-      // Try to find an Italian voice
       const voices = window.speechSynthesis.getVoices();
       const italianVoice = voices.find((v) => v.lang.startsWith("it"));
       if (italianVoice) {
@@ -78,7 +77,6 @@ export default function ChatInterface({ session }) {
     }
   };
 
-  // Load messages when the session changes
   useEffect(() => {
     if (!session?._id) return;
 
@@ -95,10 +93,9 @@ export default function ChatInterface({ session }) {
     fetchMessages();
   }, [session?._id]);
 
-  // Scroll to the bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, error]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -107,6 +104,7 @@ export default function ChatInterface({ session }) {
     const tempMessage = newMessage;
     setNewMessage("");
     setLoading(true);
+    setError(null);
 
     const userMessage = {
       _id: Date.now().toString(),
@@ -123,17 +121,28 @@ export default function ChatInterface({ session }) {
       });
 
       if (res.data) {
-        setMessages((prev) => [...prev, res.data]);
+        const { fallbackCount, ...msgData } = res.data;
+        setMessages((prev) => [...prev, msgData]);
+        if (fallbackCount !== undefined) {
+          updateUser({ fallbackCount });
+        }
       }
     } catch (err) {
       console.error("Failed to send message", err);
-      setError("Failed to send message. Please try again.");
+      if (err.response?.status === 403) {
+        const msg = err.response.data.message || "Free limit reached. Please add your own API key.";
+        setError(msg);
+        if (onLimitReached) {
+          setTimeout(onLimitReached, 2000);
+        }
+      } else {
+        setError("Failed to send message. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // If session is somehow null, show a fallback instead of crashing
   if (!session) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -142,10 +151,16 @@ export default function ChatInterface({ session }) {
     );
   }
 
+  const freeMessagesLeft = 5 - (user?.fallbackCount || 0);
+  const showUsageWarning = !user?.hasApiKey && freeMessagesLeft >= 0;
+  
+  // Show error card if explicitly set or if limit is reached
+  const activeError = error || (freeMessagesLeft <= 0 && !user?.hasApiKey ? "Free limit reached. Please add your own Gemini API key in settings to continue." : null);
+
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 relative">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm">
+      <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm relative z-10">
         <div>
           <h2 className="text-xl font-semibold text-gray-800">
             {session.focus_area || "Italian Conversation Practice"}
@@ -154,16 +169,25 @@ export default function ChatInterface({ session }) {
             {session.mode || "Chat"} • Level {session.level || "A1"}
           </p>
         </div>
+        
+        {showUsageWarning && (
+          <div className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-2 ${
+            freeMessagesLeft === 0 
+              ? "bg-red-100 text-red-700 animate-pulse" 
+              : "bg-amber-100 text-amber-700"
+          }`}>
+            <AlertCircle size={14} />
+            <span className="font-medium">
+              {freeMessagesLeft === 0 
+                ? "Free limit reached" 
+                : `${freeMessagesLeft} free message${freeMessagesLeft === 1 ? '' : 's'} left`}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {error && (
-          <div className="bg-red-50 text-red-500 p-2 rounded text-center text-xs">
-            {error}
-          </div>
-        )}
-
         {messages.map((msg) => {
           const isUser = msg.sender === "user";
           return (
@@ -222,15 +246,33 @@ export default function ChatInterface({ session }) {
             </div>
           </div>
         )}
+
+        {activeError && (
+          <div className="flex justify-center my-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm max-w-md">
+              <AlertCircle className="shrink-0" size={20} />
+              <div>
+                <p className="text-sm font-semibold">{activeError}</p>
+                {freeMessagesLeft <= 0 && (
+                  <button 
+                    onClick={onLimitReached}
+                    className="text-xs underline mt-1 font-medium hover:text-red-800 transition-colors"
+                  >
+                    Open Settings to add your key
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-white border-t p-4">
+      <div className="bg-white border-t p-4 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
         <form
           onSubmit={handleSendMessage}
           className="flex gap-2 max-w-4xl mx-auto"
         >
-          {/* Microphone button */}
           <button
             type="button"
             onClick={toggleListening}
@@ -239,27 +281,28 @@ export default function ChatInterface({ session }) {
                 ? "bg-red-100 border-red-300 text-red-600 animate-pulse"
                 : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100"
             }`}
-            disabled={loading}
+            disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
             title={isListening ? "Stop Listening" : "Start Voice Input"}
           >
             {isListening ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
-          {/* input area */}
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={
-              isListening ? "Listening..." : "Type your message in Italian..."
+              freeMessagesLeft <= 0 && !user?.hasApiKey
+                ? "Free limit reached..."
+                : isListening ? "Listening..." : "Type your message in Italian..."
             }
-            className="flex-1 border border-gray-300 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            disabled={loading}
+            className="flex-1 border border-gray-300 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
+            disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
           />
           <button
             type="submit"
-            disabled={loading || !newMessage.trim()}
-            className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            disabled={loading || !newMessage.trim() || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
+            className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
           >
             <Send size={20} />
           </button>

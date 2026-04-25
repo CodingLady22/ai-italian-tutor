@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChatSession, ChatSessionDocument } from './schema/chat-session.schema';
@@ -19,6 +19,12 @@ export class ChatService {
 
   async startSession(userId: string, dto: CreateChatDto) {
     const user = await this.usersService.findOneById(userId);
+    
+    // Check fallback limit
+    if (!user?.geminiApiKey && (user?.fallbackCount ?? 0) >= 5) {
+      throw new ForbiddenException('You have reached the limit of free messages. Please add your own Gemini API key in settings to continue.');
+    }
+
     const session = new this.sessionModel({
       user_id: userId,
       ...dto
@@ -33,6 +39,13 @@ export class ChatService {
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     );
 
+    // Increment fallback count if no personal API key was used
+    let updatedFallbackCount = user?.fallbackCount ?? 0;
+    if (!user?.geminiApiKey) {
+      const updatedUser = await this.usersService.incrementFallbackCount(userId);
+      updatedFallbackCount = updatedUser?.fallbackCount ?? updatedFallbackCount;
+    }
+
     const firstMsg = new this.messageModel({
       session_id: savedSession._id,
       sender: 'ai',
@@ -42,7 +55,8 @@ export class ChatService {
 
     return {
       session: savedSession,
-      firstMessage: firstMsg
+      firstMessage: firstMsg,
+      fallbackCount: updatedFallbackCount
     };
   }
 
@@ -60,6 +74,11 @@ export class ChatService {
     if(!session) throw new NotFoundException('Chat session not found');
 
     const user = await this.usersService.findOneById(userId);
+
+    // Check fallback limit
+    if (!user?.geminiApiKey && (user?.fallbackCount ?? 0) >= 5) {
+      throw new ForbiddenException('You have reached the limit of free messages. Please add your own Gemini API key in settings to continue.');
+    }
 
     const userMsg = new this.messageModel({
       session_id: dto.sessionId,
@@ -86,6 +105,13 @@ export class ChatService {
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     )
 
+    // Increment fallback count if no personal API key was used
+    let updatedFallbackCount = user?.fallbackCount ?? 0;
+    if (!user?.geminiApiKey) {
+      const updatedUser = await this.usersService.incrementFallbackCount(userId);
+      updatedFallbackCount = updatedUser?.fallbackCount ?? updatedFallbackCount;
+    }
+
     const aiMsg = new this.messageModel({
       session_id: dto.sessionId,
       sender: 'ai',
@@ -94,7 +120,10 @@ export class ChatService {
 
     await aiMsg.save()
 
-    return aiMsg
+    return {
+      ...aiMsg.toObject(),
+      fallbackCount: updatedFallbackCount
+    }
   }
 
   async deleteSession(userId: string, sessionId: string) {

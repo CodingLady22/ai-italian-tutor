@@ -57,7 +57,6 @@ export default function Dashboard() {
     };
     fetchSessions();
 
-    // handle initial resize/check
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         setSidebarOpen(false);
@@ -120,14 +119,21 @@ export default function Dashboard() {
       const res = await api.post("/chat/start-session", newSessionData);
 
       const newSession = res.data.session;
+      if (res.data.fallbackCount !== undefined) {
+        updateUser({ fallbackCount: res.data.fallbackCount });
+      }
 
       setSessions([newSession, ...sessions]);
       setSelectedSession(newSession);
-      // close sidebar on mobile after creating session
       if (window.innerWidth < 1024) setSidebarOpen(false);
     } catch (err) {
       console.error("Failed to create session", err);
-      setCreateError("Failed to start session. Please try again.");
+      if (err.response?.status === 403) {
+        setCreateError(err.response.data.message || "Free limit reached. Please add your own API key.");
+        setTimeout(() => setIsSettingsOpen(true), 2000);
+      } else {
+        setCreateError("Failed to start session. Please try again.");
+      }
     } finally {
       setIsCreating(false);
     }
@@ -240,7 +246,6 @@ export default function Dashboard() {
               Ciao, {user?.name || user?.email?.split("@")[0]}!
             </p>
           </div>
-          {/* mobile close button */}
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden hover:text-gray-300"
@@ -328,7 +333,6 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full relative">
-        {/* toggle sidebar */}
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
@@ -343,23 +347,39 @@ export default function Dashboard() {
           <div className="bg-amber-50 border-b border-amber-100 p-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
             <AlertCircle size={16} />
             <span>
-              Please{" "}
-              <button
-                onClick={() => setIsSettingsOpen(true)}
-                className="font-bold underline"
-              >
-                add your Gemini API Key
-              </button>{" "}
-              in Settings to start practicing.
+              {user?.fallbackCount >= 5 ? (
+                <>
+                  Free limit reached. Please{" "}
+                  <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="font-bold underline"
+                  >
+                    add your Gemini API Key
+                  </button>{" "}
+                  to continue.
+                </>
+              ) : (
+                <>
+                  You have <b>{5 - (user?.fallbackCount || 0)}</b> free messages
+                  left. <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="font-bold underline"
+                  >
+                    Add your own API Key
+                  </button>{" "}
+                  for unlimited access.
+                </>
+              )}
             </span>
           </div>
         )}
 
         {selectedSession ? (
-          // active chat interface
-          <ChatInterface session={selectedSession} />
+          <ChatInterface 
+            session={selectedSession} 
+            onLimitReached={() => setIsSettingsOpen(true)}
+          />
         ) : (
-          // new session prompt
           <div className="flex-1 flex items-center justify-center p-4 bg-gray-50">
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
               <div className="text-center mb-8">
