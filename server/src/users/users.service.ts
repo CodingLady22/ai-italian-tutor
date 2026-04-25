@@ -40,9 +40,15 @@ export class UsersService {
     async updateApiKey(userId: string, apiKey: string): Promise<UserDocument | null> {
         const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
         const encryptedKey = encrypt(apiKey, encryptionKey);
-        
+
         return this.userModel.findByIdAndUpdate(userId, {
             geminiApiKey: encryptedKey
+        }, { new: true }).exec()
+    }
+
+    async incrementFallbackCount(userId: string): Promise<UserDocument | null> {
+        return this.userModel.findByIdAndUpdate(userId, {
+            $inc: { fallbackCount: 1 }
         }, { new: true }).exec()
     }
 
@@ -50,4 +56,5 @@ export class UsersService {
         const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
         return decrypt(encryptedKey, encryptionKey);
     }
-}
+    }
+

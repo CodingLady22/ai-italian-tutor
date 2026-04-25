@@ -26,6 +26,9 @@ export class User {
 
     @Prop()
     geminiApiKey?: string
+
+    @Prop({ default: 0 })
+    fallbackCount: number
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

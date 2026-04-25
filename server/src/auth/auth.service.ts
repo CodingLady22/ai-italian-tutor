@@ -82,7 +82,8 @@ export class AuthService {
                 email: user.email,
                 name: user.name.split(' ')[0],
                 italian_level: user.italian_level,
-                hasApiKey: !!user.geminiApiKey
+                hasApiKey: !!user.geminiApiKey,
+                fallbackCount: user.fallbackCount || 0
             }
         }
     }
