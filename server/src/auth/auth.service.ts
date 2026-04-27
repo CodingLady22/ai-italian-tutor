@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { User } from './schema/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
@@ -34,7 +34,13 @@ export class AuthService {
             verificationToken
         })
 
-        await this.emailService.sendVerificationEmail(user.email, verificationToken);
+        try {
+            await this.emailService.sendVerificationEmail(user.email, verificationToken);
+        } catch (error) {
+            // Delete the unverified user if email sending fails
+            await this.usersService.deleteUser(user._id as string);
+            throw new InternalServerErrorException('Failed to send verification email. Please try again later.');
+        }
 
         return {
             message: 'Registration successful. Please check your email to verify your account.',

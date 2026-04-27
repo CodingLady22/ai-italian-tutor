@@ -8,7 +8,10 @@ async function bootstrap() {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:5173'],
+    origin: [frontendUrl, 
+      'http://localhost:5173',
+      /https:\/\/ai-italian-tutor.*\.vercel\.app$/ // matches any vercel deployment
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true
   });

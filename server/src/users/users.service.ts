@@ -37,6 +37,10 @@ export class UsersService {
         }, { new: true }).exec()
     }
 
+    async deleteUser(id: string): Promise<UserDocument | null> {
+        return this.userModel.findByIdAndDelete(id).exec()
+    }
+
     async updateApiKey(userId: string, apiKey: string): Promise<UserDocument | null> {
         const encryptionKey = this.configService.getOrThrow<string>('ENCRYPTION_KEY');
         const encryptedKey = encrypt(apiKey, encryptionKey);
