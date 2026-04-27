@@ -19,14 +19,11 @@ export default function Register() {
     if (loading) return; // Prevent multiple submissions
 
     setLoading(true);
-    console.log("Form submitted"); // Debugging log
     setError("");
     setSuccess("");
 
-    console.log("Calling register..."); // Debugging log
     // Calling register() from context
     const result = await register(name, email, password, level);
-    console.log("Register result:", result); // Debugging log
 
     if (result.success) {
       setSuccess(result.message);
