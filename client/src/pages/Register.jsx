@@ -10,15 +10,23 @@ export default function Register() {
   const [level, setLevel] = useState("A1");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (loading) return; // Prevent multiple submissions
+
+    setLoading(true);
+    console.log("Form submitted"); // Debugging log
     setError("");
     setSuccess("");
 
+    console.log("Calling register..."); // Debugging log
     // Calling register() from context
     const result = await register(name, email, password, level);
+    console.log("Register result:", result); // Debugging log
 
     if (result.success) {
       setSuccess(result.message);
