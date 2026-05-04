@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         success: true,
         message:
           response.data.message ||
-          "Registration successful! Please check your email to verify your account.",
+          "Registration successful! You can now log in.",
       };
     } catch (error) {
       return {

@@ -10,7 +10,6 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import ApiKeyGuide from "./pages/ApiKeyGuide";
 import LandingPage from "./pages/LandingPage";
-import VerifyEmail from "./pages/VerifyEmail";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -47,7 +46,6 @@ function App() {
 
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Register />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
 
             <Route
               path="/dashboard"
