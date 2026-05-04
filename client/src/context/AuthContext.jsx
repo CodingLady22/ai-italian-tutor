@@ -48,13 +48,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("user_data", JSON.stringify(dataToStore));
   };
 
-  const register = async (name, email, password, level) => {
+  const register = async (name, email, password, level, supportLanguage) => {
     try {
       const response = await api.post("/auth/signup", {
         name,
         email,
         password,
         italian_level: level,
+        supportLanguage: supportLanguage,
       });
 
       return {

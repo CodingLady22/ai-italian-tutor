@@ -8,6 +8,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [level, setLevel] = useState("A1");
+  const [supportLanguage, setSupportLanguage] = useState("English");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export default function Register() {
     setSuccess("");
 
     // Calling register() from context
-    const result = await register(name, email, password, level);
+    const result = await register(name, email, password, level, supportLanguage);
 
     if (result.success) {
       setSuccess(result.message);
@@ -125,6 +126,24 @@ export default function Register() {
                 <option value="B2">B2 - Upper Intermediate</option>
                 <option value="C1">C1 - Advanced</option>
                 <option value="C2">C2 - Mastery</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Support Language (For explanations)
+              </label>
+              <select
+                value={supportLanguage}
+                onChange={(e) => setSupportLanguage(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="English">English</option>
+                <option value="French">French</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Portuguese">Portuguese</option>
+                <option value="Ukrainian">Ukrainian</option>
+                <option value="Arabic">Arabic (Morocco)</option>
               </select>
             </div>
 

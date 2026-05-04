@@ -2,9 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { Send, User, Bot, Loader2, Volume2, Mic, MicOff, AlertCircle } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function ChatInterface({ session, onLimitReached }) {
   const { user, updateUser } = useAuth();
+  const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -86,12 +88,12 @@ export default function ChatInterface({ session, onLimitReached }) {
         setMessages(Array.isArray(res.data) ? res.data : []);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
-        setError("Could not load conversation history.");
+        setError(t('chatErrorHistory'));
       }
     };
 
     fetchMessages();
-  }, [session?._id]);
+  }, [session?._id, t]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -130,13 +132,13 @@ export default function ChatInterface({ session, onLimitReached }) {
     } catch (err) {
       console.error("Failed to send message", err);
       if (err.response?.status === 403) {
-        const msg = err.response.data.message || "Free limit reached. Please add your own API key.";
+        const msg = err.response.data.message || t('chatErrorLimit');
         setError(msg);
         if (onLimitReached) {
           setTimeout(onLimitReached, 2000);
         }
       } else {
-        setError("Failed to send message. Please try again.");
+        setError(t('chatErrorSend'));
       }
     } finally {
       setLoading(false);
@@ -146,7 +148,7 @@ export default function ChatInterface({ session, onLimitReached }) {
   if (!session) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
-        Select a session to start chatting.
+        {t('chatSelectSession')}
       </div>
     );
   }
@@ -155,7 +157,7 @@ export default function ChatInterface({ session, onLimitReached }) {
   const showUsageWarning = !user?.hasApiKey && freeMessagesLeft >= 0;
   
   // Show error card if explicitly set or if limit is reached
-  const activeError = error || (freeMessagesLeft <= 0 && !user?.hasApiKey ? "Free limit reached. Please add your own Gemini API key in settings to continue." : null);
+  const activeError = error || (freeMessagesLeft <= 0 && !user?.hasApiKey ? t('chatErrorLimit') : null);
 
   return (
     <div className="flex flex-col h-full bg-gray-50 relative">
@@ -179,8 +181,8 @@ export default function ChatInterface({ session, onLimitReached }) {
             <AlertCircle size={14} />
             <span className="font-medium">
               {freeMessagesLeft === 0 
-                ? "Free limit reached" 
-                : `${freeMessagesLeft} free message${freeMessagesLeft === 1 ? '' : 's'} left`}
+                ? t('chatLimitReached') 
+                : `${t('youHave')} ${freeMessagesLeft} ${t('freeMessagesLeft')}`}
             </span>
           </div>
         )}
@@ -242,7 +244,7 @@ export default function ChatInterface({ session, onLimitReached }) {
           <div className="flex justify-start">
             <div className="bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm flex items-center gap-2">
               <Loader2 className="animate-spin" size={14} />
-              Thinking...
+              {t('chatThinking')}
             </div>
           </div>
         )}
@@ -253,12 +255,12 @@ export default function ChatInterface({ session, onLimitReached }) {
               <AlertCircle className="shrink-0" size={20} />
               <div>
                 <p className="text-sm font-semibold">{activeError}</p>
-                {freeMessagesLeft <= 0 && (
+                {freeMessagesLeft <= 0 && !user?.hasApiKey && (
                   <button 
                     onClick={onLimitReached}
                     className="text-xs underline mt-1 font-medium hover:text-red-800 transition-colors"
                   >
-                    Open Settings to add your key
+                    {t('openSettings')}
                   </button>
                 )}
               </div>
@@ -293,8 +295,8 @@ export default function ChatInterface({ session, onLimitReached }) {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={
               freeMessagesLeft <= 0 && !user?.hasApiKey
-                ? "Free limit reached..."
-                : isListening ? "Listening..." : "Type your message in Italian..."
+                ? t('chatLimitReached')
+                : isListening ? t('chatListening') : t('chatPlaceholder')
             }
             className="flex-1 border border-gray-300 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
             disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
