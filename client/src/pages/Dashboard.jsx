@@ -271,6 +271,7 @@ export default function Dashboard() {
                     <option value="French">French</option>
                     <option value="Spanish">Spanish</option>
                     <option value="Portuguese">Portuguese</option>
+                    <option value="Italian">Italian</option>
                     <option value="Ukrainian">Ukrainian</option>
                     <option value="Arabic">Arabic (Morocco)</option>
                   </select>
