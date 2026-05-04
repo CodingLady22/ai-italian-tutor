@@ -4,5 +4,6 @@ export class CreateUserDto {
     email: string;
     password: string;
     italian_level: string;
+    supportLanguage?: string;
     verificationToken?: string;
 }
