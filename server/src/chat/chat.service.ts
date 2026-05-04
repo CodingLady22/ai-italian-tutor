@@ -35,7 +35,7 @@ export class ChatService {
       [],
       `Inizia la conversazione come tutor amichevole. Il livello è ${dto.level}, ${dto.mode === 'grammar' ? 'insegneremo' : 'parleremo di'}: ${dto.focus_area}. Saluta e fai una domanda per iniziare.`,
       // `Per favore, inizia la conversazione presentandoti come tutor e introducendo il nostro argomento: ${dto.focus_area}.`,
-      { level: dto.level, focus_area: dto.focus_area },
+      { level: dto.level, focus_area: dto.focus_area, support_language: user?.supportLanguage || 'English' },
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     );
 
@@ -101,7 +101,7 @@ export class ChatService {
     const aiResponseText = await this.authAiService.generateResponse(
       history,
       dto.message,
-      { level: session.level, focus_area: session.focus_area},
+      { level: session.level, focus_area: session.focus_area, support_language: user?.supportLanguage || 'English' },
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     )
 

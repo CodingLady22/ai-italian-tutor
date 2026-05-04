@@ -25,7 +25,8 @@ export class AuthService {
             name: registerDto.name,
             email: registerDto.email,
             password: hashPassword,
-            italian_level: registerDto.italian_level || 'A1'
+            italian_level: registerDto.italian_level || 'A1',
+            supportLanguage: registerDto.supportLanguage || 'English'
         })
 
         return {
@@ -35,6 +36,7 @@ export class AuthService {
                 email: user.email,
                 name: user.name.split(' ')[0],
                 italian_level: user.italian_level,
+                supportLanguage: user.supportLanguage,
                 hasApiKey: !!user.geminiApiKey
             }
         };
@@ -60,6 +62,7 @@ export class AuthService {
                 email: user.email,
                 name: user.name.split(' ')[0],
                 italian_level: user.italian_level,
+                supportLanguage: user.supportLanguage || 'English',
                 hasApiKey: !!user.geminiApiKey,
                 fallbackCount: user.fallbackCount || 0
             }

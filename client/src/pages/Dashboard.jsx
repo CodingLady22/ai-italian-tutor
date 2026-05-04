@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "../hooks/useTranslation";
 import {
   LogOut,
   Plus,
@@ -12,6 +13,7 @@ import {
   Key,
   AlertCircle,
   Save,
+  Languages,
 } from "lucide-react";
 import api from "../api/axios";
 import ChatInterface from "../components/ChatInterface";
@@ -20,6 +22,7 @@ import { grammarTopics } from "../api/grammarTopics";
 export default function Dashboard() {
   const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
@@ -30,8 +33,11 @@ export default function Dashboard() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
+  const [supportLanguageInput, setSupportLanguageInput] = useState(user?.supportLanguage || "English");
   const [isSavingKey, setIsSavingKey] = useState(false);
-  const [saveMessage, setSaveMessage] = useState({ type: "", text: "" });
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
+  const [apiKeyMessage, setApiKeyMessage] = useState({ type: "", text: "" });
+  const [languageMessage, setLanguageMessage] = useState({ type: "", text: "" });
 
   // new session from state
   const [newSessionData, setNewSessionData] = useState({
@@ -77,26 +83,47 @@ export default function Dashboard() {
   const handleSaveApiKey = async (e) => {
     e.preventDefault();
     if (!apiKeyInput) {
-      setSaveMessage({ type: "error", text: "Please enter an API key." });
+      setApiKeyMessage({ type: "error", text: "Please enter an API key." });
       return;
     }
     setIsSavingKey(true);
-    setSaveMessage({ type: "", text: "" });
+    setApiKeyMessage({ type: "", text: "" });
 
     try {
       await api.put("/users/api-key", { apiKey: apiKeyInput });
       updateUser({ hasApiKey: true });
-      setSaveMessage({ type: "success", text: "API Key saved successfully!" });
+      setApiKeyMessage({ type: "success", text: "API Key saved successfully!" });
       setApiKeyInput("");
       setTimeout(() => setIsSettingsOpen(false), 1500);
     } catch (err) {
       console.error("Failed to save API key", err);
-      setSaveMessage({
+      setApiKeyMessage({
         type: "error",
         text: "Failed to save API key. Please try again.",
       });
     } finally {
       setIsSavingKey(false);
+    }
+  };
+
+  const handleSaveLanguage = async (e) => {
+    e.preventDefault();
+    setIsSavingLanguage(true);
+    setLanguageMessage({ type: "", text: "" });
+
+    try {
+      await api.put("/users/language", { supportLanguage: supportLanguageInput });
+      updateUser({ supportLanguage: supportLanguageInput });
+      setLanguageMessage({ type: "success", text: "Support language updated!" });
+      setTimeout(() => setIsSettingsOpen(false), 1500);
+    } catch (err) {
+      console.error("Failed to save language", err);
+      setLanguageMessage({
+        type: "error",
+        text: "Failed to update language. Please try again.",
+      });
+    } finally {
+      setIsSavingLanguage(false);
     }
   };
 
@@ -160,7 +187,7 @@ export default function Dashboard() {
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div className="flex items-center gap-2">
                 <Settings className="text-gray-600" size={20} />
-                <h3 className="font-bold text-gray-900">Settings</h3>
+                <h3 className="font-bold text-gray-900">{t('settings')}</h3>
               </div>
               <button
                 onClick={() => setIsSettingsOpen(false)}
@@ -173,7 +200,7 @@ export default function Dashboard() {
               <form onSubmit={handleSaveApiKey} className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Key size={14} /> Gemini API Key
+                    <Key size={14} /> {t('geminiApiKey')}
                   </label>
                   <input
                     type="password"
@@ -181,37 +208,36 @@ export default function Dashboard() {
                     onChange={(e) => setApiKeyInput(e.target.value)}
                     placeholder={
                       user?.hasApiKey
-                        ? "•••••••••••••••• (Saved)"
-                        : "Enter your Gemini API Key"
+                        ? t('apiKeySaved')
+                        : t('apiKeyPlaceholder')
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
                   />
                   <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                    Get your free API key from the{" "}
+                    {t('apiKeyHelpText1')}
                     <a
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-green-600 hover:underline font-medium"
                     >
-                      Google AI Studio
+                      {t('googleAiStudio')}
                     </a>
-                    . Your key is stored securely and used only for your own
-                    requests.{" "}
+                    {t('apiKeyHelpText2')}
                     <Link
                       to="/api-key-guide"
                       className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
                     >
-                      (View Step-by-Step Guide)
+                      {t('viewGuide')}
                     </Link>
                   </p>
                 </div>
 
-                {saveMessage.text && (
+                {apiKeyMessage.text && (
                   <div
-                    className={`p-3 rounded-lg text-xs font-medium ${saveMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                    className={`p-3 rounded-lg text-xs font-medium ${apiKeyMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
                   >
-                    {saveMessage.text}
+                    {apiKeyMessage.text}
                   </div>
                 )}
 
@@ -225,7 +251,53 @@ export default function Dashboard() {
                   ) : (
                     <Save size={18} />
                   )}
-                  Save API Key
+                  {t('saveApiKey')}
+                </button>
+              </form>
+
+              <hr className="my-6 border-gray-100" />
+
+              <form onSubmit={handleSaveLanguage} className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                    <Languages size={14} /> {t('supportLanguage')}
+                  </label>
+                  <select
+                    value={supportLanguageInput}
+                    onChange={(e) => setSupportLanguageInput(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white"
+                  >
+                    <option value="English">English</option>
+                    <option value="French">French</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="Portuguese">Portuguese</option>
+                    <option value="Ukrainian">Ukrainian</option>
+                    <option value="Arabic">Arabic (Morocco)</option>
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+                    {t('supportLanguageHelpText')}
+                  </p>
+                </div>
+
+                {languageMessage.text && (
+                  <div
+                    className={`p-3 rounded-lg text-xs font-medium ${languageMessage.type === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}
+                  >
+                    {languageMessage.text}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSavingLanguage}
+                  className="w-full bg-green-600 text-white py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {isSavingLanguage ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Save size={18} />
+                  )}
+                  {t('updateLanguage')}
                 </button>
               </form>
             </div>
@@ -259,13 +331,13 @@ export default function Dashboard() {
             onClick={handleNewChat}
             className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md shadow-green-900/20"
           >
-            <Plus size={18} /> New Chat
+            <Plus size={18} /> {t('newChat')}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
-            History
+            {t('history')}
           </p>
           {sessions.length === 0 ? (
             <div className="text-center py-8 px-4">
@@ -274,7 +346,7 @@ export default function Dashboard() {
                 size={32}
               />
               <p className="text-gray-500 text-xs italic">
-                No conversations yet
+                {t('noConversations')}
               </p>
             </div>
           ) : (
@@ -320,13 +392,13 @@ export default function Dashboard() {
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
           >
-            <Settings size={18} /> Settings
+            <Settings size={18} /> {t('settings')}
           </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
           >
-            <LogOut size={18} /> Sign Out
+            <LogOut size={18} /> {t('signOut')}
           </button>
         </div>
       </div>
@@ -349,25 +421,25 @@ export default function Dashboard() {
             <span>
               {user?.fallbackCount >= 5 ? (
                 <>
-                  Free limit reached. Please{" "}
+                  {t('freeLimitReached1')}
                   <button
                     onClick={() => setIsSettingsOpen(true)}
                     className="font-bold underline"
                   >
-                    add your Gemini API Key
+                    {t('addApiKey')}
                   </button>{" "}
-                  to continue.
+                  {t('freeLimitReached2')}
                 </>
               ) : (
                 <>
-                  You have <b>{5 - (user?.fallbackCount || 0)}</b> free messages
-                  left. <button
+                  {t('youHave')} <b>{5 - (user?.fallbackCount || 0)}</b> {t('freeMessagesLeft')}
+                  <button
                     onClick={() => setIsSettingsOpen(true)}
                     className="font-bold underline"
                   >
-                    Add your own API Key
+                    {t('addOwnApiKey')}
                   </button>{" "}
-                  for unlimited access.
+                  {t('unlimitedAccess')}
                 </>
               )}
             </span>
@@ -384,10 +456,10 @@ export default function Dashboard() {
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Inizia una conversazione
+                  {t('startConversation')}
                 </h2>
                 <p className="text-gray-500 mt-2">
-                  Choose a topic to practice your Italian
+                  {t('chooseTopic')}
                 </p>
               </div>
 
@@ -400,7 +472,7 @@ export default function Dashboard() {
               <form onSubmit={handleCreateSession} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    My Level
+                    {t('myLevel')}
                   </label>
                   <select
                     value={newSessionData.level}
@@ -422,7 +494,7 @@ export default function Dashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Practice Mode
+                    {t('practiceMode')}
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
@@ -439,7 +511,7 @@ export default function Dashboard() {
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      Topic Based
+                      {t('topicBased')}
                     </button>
                     <button
                       type="button"
@@ -455,7 +527,7 @@ export default function Dashboard() {
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      Grammar Focus
+                      {t('grammarFocus')}
                     </button>
                   </div>
                 </div>
@@ -463,8 +535,8 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {newSessionData.mode === "topic"
-                      ? "What do you want to talk about?"
-                      : "Which grammar rule?"}
+                      ? t('whatToTalkAbout')
+                      : t('whichGrammarRule')}
                   </label>
                   {newSessionData.mode === "grammar" &&
                   grammarTopics[newSessionData.level] ? (
@@ -479,7 +551,7 @@ export default function Dashboard() {
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                     >
-                      <option value="">Select a topic</option>
+                      <option value="">{t('selectTopic')}</option>
                       {grammarTopics[newSessionData.level].map((topic) => (
                         <option key={topic} value={topic}>
                           {topic}
@@ -492,8 +564,8 @@ export default function Dashboard() {
                       required
                       placeholder={
                         newSessionData.mode === "topic"
-                          ? "e.g., Ordering Pizza, Travel"
-                          : "e.g., Past Tense, Prepositions"
+                          ? t('egTopic')
+                          : t('egGrammar')
                       }
                       value={newSessionData.focus_area}
                       onChange={(e) =>
@@ -514,10 +586,10 @@ export default function Dashboard() {
                 >
                   {isCreating ? (
                     <>
-                      <Loader2 className="animate-spin" size={20} /> Starting...
+                      <Loader2 className="animate-spin" size={20} /> {t('starting')}
                     </>
                   ) : (
-                    "Start Practice"
+                    t('startPractice')
                   )}
                 </button>
               </form>

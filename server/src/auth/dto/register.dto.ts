@@ -23,4 +23,8 @@ export class RegisterDto {
     @IsString()
     @IsOptional()
     italian_level?: string
+
+    @IsString()
+    @IsOptional()
+    supportLanguage?: string
 }

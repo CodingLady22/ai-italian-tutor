@@ -39,6 +39,12 @@ export class UsersService {
         }, { new: true }).exec()
     }
 
+    async updateSupportLanguage(userId: string, supportLanguage: string): Promise<UserDocument | null> {
+        return this.userModel.findByIdAndUpdate(userId, {
+            supportLanguage
+        }, { new: true }).exec()
+    }
+
     async incrementFallbackCount(userId: string): Promise<UserDocument | null> {
         return this.userModel.findByIdAndUpdate(userId, {
             $inc: { fallbackCount: 1 }

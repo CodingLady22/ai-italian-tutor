@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { Document, Schema as MongooseSchema } from "mongoose";
-import { User } from "src/auth/schema/user.schema";
+import { User } from "../../auth/schema/user.schema";
 
 export type ChatSessionDocument = ChatSession & Document;
 

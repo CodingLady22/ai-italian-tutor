@@ -18,6 +18,9 @@ export class User {
     @Prop({ required: true, default: 'A1' })
     italian_level!: string
 
+    @Prop({ default: 'English' })
+    supportLanguage!: string
+
     @Prop({ default: true })
     isVerified!: boolean
 
