@@ -18,7 +18,7 @@ export class User {
     @Prop({ required: true, default: 'A1' })
     italian_level!: string
 
-    @Prop({ default: false })
+    @Prop({ default: true })
     isVerified!: boolean
 
     @Prop()
@@ -28,7 +28,7 @@ export class User {
     geminiApiKey?: string
 
     @Prop({ default: 0 })
-    fallbackCount: number
+    fallbackCount!: number
 }
 
 export const UserSchema = SchemaFactory.createForClass(User)

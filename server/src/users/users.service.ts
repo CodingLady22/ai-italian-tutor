@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from 'src/auth/schema/user.schema';
+import { User, UserDocument } from '../auth/schema/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { encrypt, decrypt } from '../common/utils/encryption.util';
@@ -24,17 +24,6 @@ export class UsersService {
 
     async findOneById(id: string): Promise<UserDocument | null> {
         return this.userModel.findById(id).exec()
-    }
-
-    async findByVerificationToken(token: string): Promise<UserDocument | null> {
-        return this.userModel.findOne({ verificationToken: token }).exec()
-    }
-
-    async verifyUser(id: string): Promise<UserDocument | null> {
-        return this.userModel.findByIdAndUpdate(id, {
-            isVerified: true,
-            verificationToken: null
-        }, { new: true }).exec()
     }
 
     async deleteUser(id: string): Promise<UserDocument | null> {
