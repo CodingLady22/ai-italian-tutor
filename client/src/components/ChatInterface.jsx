@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, User, Bot, Loader2, Volume2, Mic, MicOff, AlertCircle } from "lucide-react";
+import {
+  Send,
+  User,
+  Bot,
+  Loader2,
+  Volume2,
+  Mic,
+  MicOff,
+  AlertCircle,
+} from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../hooks/useTranslation";
@@ -85,18 +94,27 @@ export default function ChatInterface({ session, onLimitReached }) {
     const fetchMessages = async () => {
       try {
         const res = await api.get(`/chat/sessions/${session._id}/messages`);
-        setMessages(Array.isArray(res.data) ? res.data : []);
+        const newMessages = Array.isArray(res.data) ? res.data : [];
+        setMessages(newMessages);
+        // On initial load, scroll to bottom
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        }, 100);
       } catch (err) {
         console.error("Failed to fetch messages:", err);
-        setError(t('chatErrorHistory'));
+        setError(t("chatErrorHistory"));
       }
     };
 
     fetchMessages();
   }, [session?._id, t]);
 
+  // Handle auto-scroll only for new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 0) {
+      // If there are messages, scroll down to the bottom
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+    }
   }, [messages, error]);
 
   const handleSendMessage = async (e) => {
@@ -132,13 +150,13 @@ export default function ChatInterface({ session, onLimitReached }) {
     } catch (err) {
       console.error("Failed to send message", err);
       if (err.response?.status === 403) {
-        const msg = err.response.data.message || t('chatErrorLimit');
+        const msg = err.response.data.message || t("chatErrorLimit");
         setError(msg);
         if (onLimitReached) {
           setTimeout(onLimitReached, 2000);
         }
       } else {
-        setError(t('chatErrorSend'));
+        setError(t("chatErrorSend"));
       }
     } finally {
       setLoading(false);
@@ -148,19 +166,24 @@ export default function ChatInterface({ session, onLimitReached }) {
   if (!session) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-500">
-        {t('chatSelectSession')}
+        {t("chatSelectSession")}
       </div>
     );
   }
 
   const freeMessagesLeft = 5 - (user?.fallbackCount || 0);
   const showUsageWarning = !user?.hasApiKey && freeMessagesLeft >= 0;
-  
+
   // Show error card if explicitly set or if limit is reached
-  const activeError = error || (freeMessagesLeft <= 0 && !user?.hasApiKey ? t('chatErrorLimit') : null);
+  const activeError =
+    error ||
+    (freeMessagesLeft <= 0 && !user?.hasApiKey ? t("chatErrorLimit") : null);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 relative">
+    <div
+      className="flex flex-col min-h-0 h-full bg-gray-50 relative"
+      style={{ height: "100%", minHeight: 0 }}
+    >
       {/* Header */}
       <div className="bg-white border-b px-6 py-4 flex justify-between items-center shadow-sm relative z-10">
         <div>
@@ -171,25 +194,27 @@ export default function ChatInterface({ session, onLimitReached }) {
             {session.mode || "Chat"} • Level {session.level || "A1"}
           </p>
         </div>
-        
+
         {showUsageWarning && (
-          <div className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-2 ${
-            freeMessagesLeft === 0 
-              ? "bg-red-100 text-red-700 animate-pulse" 
-              : "bg-amber-100 text-amber-700"
-          }`}>
+          <div
+            className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-2 ${
+              freeMessagesLeft === 0
+                ? "bg-red-100 text-red-700 animate-pulse"
+                : "bg-amber-100 text-amber-700"
+            }`}
+          >
             <AlertCircle size={14} />
             <span className="font-medium">
-              {freeMessagesLeft === 0 
-                ? t('chatLimitReached') 
-                : `${t('youHave')} ${freeMessagesLeft} ${t('freeMessagesLeft')}`}
+              {freeMessagesLeft === 0
+                ? t("chatLimitReached")
+                : `${t("youHave")} ${freeMessagesLeft} ${t("freeMessagesLeft")}`}
             </span>
           </div>
         )}
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 overscroll-contain">
         {messages.map((msg) => {
           const isUser = msg.sender === "user";
           return (
@@ -248,7 +273,7 @@ export default function ChatInterface({ session, onLimitReached }) {
                 <span></span>
                 <span></span>
               </div>
-              <span className="font-medium italic">{t('chatThinking')}</span>
+              <span className="font-medium italic">{t("chatThinking")}</span>
             </div>
           </div>
         )}
@@ -260,11 +285,11 @@ export default function ChatInterface({ session, onLimitReached }) {
               <div>
                 <p className="text-sm font-semibold">{activeError}</p>
                 {freeMessagesLeft <= 0 && !user?.hasApiKey && (
-                  <button 
+                  <button
                     onClick={onLimitReached}
                     className="text-xs underline mt-1 font-medium hover:text-red-800 transition-colors"
                   >
-                    {t('openSettings')}
+                    {t("openSettings")}
                   </button>
                 )}
               </div>
@@ -299,15 +324,21 @@ export default function ChatInterface({ session, onLimitReached }) {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder={
               freeMessagesLeft <= 0 && !user?.hasApiKey
-                ? t('chatLimitReached')
-                : isListening ? t('chatListening') : t('chatPlaceholder')
+                ? t("chatLimitReached")
+                : isListening
+                  ? t("chatListening")
+                  : t("chatPlaceholder")
             }
             className="flex-1 border border-gray-300 rounded-full px-6 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-50 disabled:cursor-not-allowed transition-all"
             disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
           />
           <button
             type="submit"
-            disabled={loading || !newMessage.trim() || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
+            disabled={
+              loading ||
+              !newMessage.trim() ||
+              (freeMessagesLeft <= 0 && !user?.hasApiKey)
+            }
             className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md"
           >
             <Send size={20} />

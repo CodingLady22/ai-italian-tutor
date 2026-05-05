@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { translations } from "../i18n/translations";
 
@@ -6,11 +7,11 @@ export const useTranslation = () => {
   
   // Default to English if language not set or not found in translations
   const lang = user?.supportLanguage || "English";
-  const dictionary = translations[lang] || translations["English"];
+  const dictionary = useMemo(() => translations[lang] || translations["English"], [lang]);
 
-  const t = (key) => {
+  const t = useCallback((key) => {
     return dictionary[key] || key;
-  };
+  }, [dictionary]);
 
   return { t, lang };
 };

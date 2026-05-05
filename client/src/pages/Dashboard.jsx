@@ -33,11 +33,16 @@ export default function Dashboard() {
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState("");
-  const [supportLanguageInput, setSupportLanguageInput] = useState(user?.supportLanguage || "English");
+  const [supportLanguageInput, setSupportLanguageInput] = useState(
+    user?.supportLanguage || "English",
+  );
   const [isSavingKey, setIsSavingKey] = useState(false);
   const [isSavingLanguage, setIsSavingLanguage] = useState(false);
   const [apiKeyMessage, setApiKeyMessage] = useState({ type: "", text: "" });
-  const [languageMessage, setLanguageMessage] = useState({ type: "", text: "" });
+  const [languageMessage, setLanguageMessage] = useState({
+    type: "",
+    text: "",
+  });
 
   // new session from state
   const [newSessionData, setNewSessionData] = useState({
@@ -92,7 +97,10 @@ export default function Dashboard() {
     try {
       await api.put("/users/api-key", { apiKey: apiKeyInput });
       updateUser({ hasApiKey: true });
-      setApiKeyMessage({ type: "success", text: "API Key saved successfully!" });
+      setApiKeyMessage({
+        type: "success",
+        text: "API Key saved successfully!",
+      });
       setApiKeyInput("");
       setTimeout(() => setIsSettingsOpen(false), 1500);
     } catch (err) {
@@ -112,9 +120,14 @@ export default function Dashboard() {
     setLanguageMessage({ type: "", text: "" });
 
     try {
-      await api.put("/users/language", { supportLanguage: supportLanguageInput });
+      await api.put("/users/language", {
+        supportLanguage: supportLanguageInput,
+      });
       updateUser({ supportLanguage: supportLanguageInput });
-      setLanguageMessage({ type: "success", text: "Support language updated!" });
+      setLanguageMessage({
+        type: "success",
+        text: "Support language updated!",
+      });
       setTimeout(() => setIsSettingsOpen(false), 1500);
     } catch (err) {
       console.error("Failed to save language", err);
@@ -156,7 +169,10 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Failed to create session", err);
       if (err.response?.status === 403) {
-        setCreateError(err.response.data.message || "Free limit reached. Please add your own API key.");
+        setCreateError(
+          err.response.data.message ||
+            "Free limit reached. Please add your own API key.",
+        );
         setTimeout(() => setIsSettingsOpen(true), 2000);
       } else {
         setCreateError("Failed to start session. Please try again.");
@@ -179,7 +195,15 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="fixed inset-0 flex bg-gray-100 overflow-hidden">
+      {/* Sidebar Backdrop for Mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -187,7 +211,7 @@ export default function Dashboard() {
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <div className="flex items-center gap-2">
                 <Settings className="text-gray-600" size={20} />
-                <h3 className="font-bold text-gray-900">{t('settings')}</h3>
+                <h3 className="font-bold text-gray-900">{t("settings")}</h3>
               </div>
               <button
                 onClick={() => setIsSettingsOpen(false)}
@@ -200,7 +224,7 @@ export default function Dashboard() {
               <form onSubmit={handleSaveApiKey} className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Key size={14} /> {t('geminiApiKey')}
+                    <Key size={14} /> {t("geminiApiKey")}
                   </label>
                   <input
                     type="password"
@@ -208,27 +232,27 @@ export default function Dashboard() {
                     onChange={(e) => setApiKeyInput(e.target.value)}
                     placeholder={
                       user?.hasApiKey
-                        ? t('apiKeySaved')
-                        : t('apiKeyPlaceholder')
+                        ? t("apiKeySaved")
+                        : t("apiKeyPlaceholder")
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm"
                   />
                   <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                    {t('apiKeyHelpText1')}
+                    {t("apiKeyHelpText1")}
                     <a
                       href="https://aistudio.google.com/app/apikey"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-green-600 hover:underline font-medium"
                     >
-                      {t('googleAiStudio')}
+                      {t("googleAiStudio")}
                     </a>
-                    {t('apiKeyHelpText2')}
+                    {t("apiKeyHelpText2")}
                     <Link
                       to="/api-key-guide"
                       className="text-blue-600 hover:underline font-medium inline-flex items-center gap-1"
                     >
-                      {t('viewGuide')}
+                      {t("viewGuide")}
                     </Link>
                   </p>
                 </div>
@@ -251,7 +275,7 @@ export default function Dashboard() {
                   ) : (
                     <Save size={18} />
                   )}
-                  {t('saveApiKey')}
+                  {t("saveApiKey")}
                 </button>
               </form>
 
@@ -260,7 +284,7 @@ export default function Dashboard() {
               <form onSubmit={handleSaveLanguage} className="space-y-4">
                 <div>
                   <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Languages size={14} /> {t('supportLanguage')}
+                    <Languages size={14} /> {t("supportLanguage")}
                   </label>
                   <select
                     value={supportLanguageInput}
@@ -276,7 +300,7 @@ export default function Dashboard() {
                     <option value="Arabic">Arabic (Morocco)</option>
                   </select>
                   <p className="mt-2 text-xs text-gray-500 leading-relaxed">
-                    {t('supportLanguageHelpText')}
+                    {t("supportLanguageHelpText")}
                   </p>
                 </div>
 
@@ -298,7 +322,7 @@ export default function Dashboard() {
                   ) : (
                     <Save size={18} />
                   )}
-                  {t('updateLanguage')}
+                  {t("updateLanguage")}
                 </button>
               </form>
             </div>
@@ -309,8 +333,8 @@ export default function Dashboard() {
       {/* sidebar */}
       <div
         className={`${
-          sidebarOpen ? "w-80" : "w-0"
-        } bg-gray-900 text-white transition-all duration-300 flex flex-col relative z-10 overflow-hidden`}
+          sidebarOpen ? "w-[85%] lg:w-80" : "w-0"
+        } fixed lg:relative bg-gray-900 text-white transition-all duration-300 flex flex-col z-30 lg:z-10 overflow-hidden h-full pt-14 lg:pt-0`}
       >
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <h1 className="font-bold text-xl tracking-tight">🇮🇹 AI Tutor</h1>
@@ -332,13 +356,13 @@ export default function Dashboard() {
             onClick={handleNewChat}
             className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-colors font-medium shadow-md shadow-green-900/20"
           >
-            <Plus size={18} /> {t('newChat')}
+            <Plus size={18} /> {t("newChat")}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">
-            {t('history')}
+            {t("history")}
           </p>
           {sessions.length === 0 ? (
             <div className="text-center py-8 px-4">
@@ -347,7 +371,7 @@ export default function Dashboard() {
                 size={32}
               />
               <p className="text-gray-500 text-xs italic">
-                {t('noConversations')}
+                {t("noConversations")}
               </p>
             </div>
           ) : (
@@ -393,19 +417,19 @@ export default function Dashboard() {
             onClick={() => setIsSettingsOpen(true)}
             className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
           >
-            <Settings size={18} /> {t('settings')}
+            <Settings size={18} /> {t("settings")}
           </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors text-sm w-full p-2 rounded-lg hover:bg-gray-800"
           >
-            <LogOut size={18} /> {t('signOut')}
+            <LogOut size={18} /> {t("signOut")}
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full relative">
+      <div className="flex-1 flex flex-col min-h-0 relative pt-14 lg:pt-0">
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
@@ -422,25 +446,26 @@ export default function Dashboard() {
             <span>
               {user?.fallbackCount >= 5 ? (
                 <>
-                  {t('freeLimitReached1')}
+                  {t("freeLimitReached1")}
                   <button
                     onClick={() => setIsSettingsOpen(true)}
                     className="font-bold underline"
                   >
-                    {t('addApiKey')}
+                    {t("addApiKey")}
                   </button>{" "}
-                  {t('freeLimitReached2')}
+                  {t("freeLimitReached2")}
                 </>
               ) : (
                 <>
-                  {t('youHave')} <b>{5 - (user?.fallbackCount || 0)}</b> {t('freeMessagesLeft')}
+                  {t("youHave")} <b>{5 - (user?.fallbackCount || 0)}</b>{" "}
+                  {t("freeMessagesLeft")}
                   <button
                     onClick={() => setIsSettingsOpen(true)}
                     className="font-bold underline"
                   >
-                    {t('addOwnApiKey')}
+                    {t("addOwnApiKey")}
                   </button>{" "}
-                  {t('unlimitedAccess')}
+                  {t("unlimitedAccess")}
                 </>
               )}
             </span>
@@ -448,8 +473,8 @@ export default function Dashboard() {
         )}
 
         {selectedSession ? (
-          <ChatInterface 
-            session={selectedSession} 
+          <ChatInterface
+            session={selectedSession}
             onLimitReached={() => setIsSettingsOpen(true)}
           />
         ) : (
@@ -457,11 +482,9 @@ export default function Dashboard() {
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  {t('startConversation')}
+                  {t("startConversation")}
                 </h2>
-                <p className="text-gray-500 mt-2">
-                  {t('chooseTopic')}
-                </p>
+                <p className="text-gray-500 mt-2">{t("chooseTopic")}</p>
               </div>
 
               {createError && (
@@ -473,7 +496,7 @@ export default function Dashboard() {
               <form onSubmit={handleCreateSession} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('myLevel')}
+                    {t("myLevel")}
                   </label>
                   <select
                     value={newSessionData.level}
@@ -495,7 +518,7 @@ export default function Dashboard() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('practiceMode')}
+                    {t("practiceMode")}
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <button
@@ -512,7 +535,7 @@ export default function Dashboard() {
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      {t('topicBased')}
+                      {t("topicBased")}
                     </button>
                     <button
                       type="button"
@@ -528,7 +551,7 @@ export default function Dashboard() {
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
                       }`}
                     >
-                      {t('grammarFocus')}
+                      {t("grammarFocus")}
                     </button>
                   </div>
                 </div>
@@ -536,8 +559,8 @@ export default function Dashboard() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {newSessionData.mode === "topic"
-                      ? t('whatToTalkAbout')
-                      : t('whichGrammarRule')}
+                      ? t("whatToTalkAbout")
+                      : t("whichGrammarRule")}
                   </label>
                   {newSessionData.mode === "grammar" &&
                   grammarTopics[newSessionData.level] ? (
@@ -552,7 +575,7 @@ export default function Dashboard() {
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                     >
-                      <option value="">{t('selectTopic')}</option>
+                      <option value="">{t("selectTopic")}</option>
                       {grammarTopics[newSessionData.level].map((topic) => (
                         <option key={topic} value={topic}>
                           {topic}
@@ -565,8 +588,8 @@ export default function Dashboard() {
                       required
                       placeholder={
                         newSessionData.mode === "topic"
-                          ? t('egTopic')
-                          : t('egGrammar')
+                          ? t("egTopic")
+                          : t("egGrammar")
                       }
                       value={newSessionData.focus_area}
                       onChange={(e) =>
@@ -587,10 +610,11 @@ export default function Dashboard() {
                 >
                   {isCreating ? (
                     <>
-                      <Loader2 className="animate-spin" size={20} /> {t('starting')}
+                      <Loader2 className="animate-spin" size={20} />{" "}
+                      {t("starting")}
                     </>
                   ) : (
-                    t('startPractice')
+                    t("startPractice")
                   )}
                 </button>
               </form>
