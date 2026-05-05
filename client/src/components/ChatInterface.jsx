@@ -242,9 +242,13 @@ export default function ChatInterface({ session, onLimitReached }) {
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 text-gray-500 px-4 py-2 rounded-full text-sm flex items-center gap-2">
-              <Loader2 className="animate-spin" size={14} />
-              {t('chatThinking')}
+            <div className="bg-gray-100 text-gray-500 px-4 py-3 rounded-2xl text-sm flex items-center gap-3 shadow-sm border border-gray-100">
+              <div className="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <span className="font-medium italic">{t('chatThinking')}</span>
             </div>
           </div>
         )}
