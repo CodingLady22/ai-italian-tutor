@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Request, Delete } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { ChatService } from './chat.service';
-import { CreateChatDto, sendMessageDto } from './dto/create-chat.dto';
+import { CreateChatDto, sendMessageDto, SessionIdParamDto } from './dto/create-chat.dto';
+import { START_SESSION_THROTTLE, SEND_MESSAGE_THROTTLE } from '../common/constants';
 import { AuthGuard } from '@nestjs/passport';
 
 @UseGuards(AuthGuard('jwt'))
@@ -9,6 +10,7 @@ import { AuthGuard } from '@nestjs/passport';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
+  @Throttle({ default: START_SESSION_THROTTLE })
   @Post('start-session')
   startSession(
     @Body() sessionDto: CreateChatDto,
@@ -26,12 +28,13 @@ export class ChatController {
 
   @Get('sessions/:id/messages')
   getSessionMessages(
-    @Param('id') sessionId: string
+    @Param() params: SessionIdParamDto,
+    @Request() req
   ) {
-    return this.chatService.getSessionMessages(sessionId);
+    return this.chatService.getSessionMessages(req.user.userId, params.id);
   }
 
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+  @Throttle({ default: SEND_MESSAGE_THROTTLE })
   @Post('send-message')
   sendMessage(
     @Request() req, @Body() messageDto: sendMessageDto
@@ -41,9 +44,9 @@ export class ChatController {
 
   @Delete('sessions/:id')
   deleteSession(
-    @Param('id') sessionId: string,
+    @Param() params: SessionIdParamDto,
     @Request() req
   ) {
-    return this.chatService.deleteSession(req.user.userId, sessionId);
+    return this.chatService.deleteSession(req.user.userId, params.id);
   }
 }

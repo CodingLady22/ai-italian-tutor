@@ -8,12 +8,16 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatModule } from './chat/chat.module';
 import { AiModule } from './ai/ai.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { DEFAULT_THROTTLE } from './common/constants';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([DEFAULT_THROTTLE]),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -25,6 +29,6 @@ import { AiModule } from './ai/ai.module';
     AuthModule, ChatModule, AiModule
   ],
   controllers: [AppController],
-  providers: [AppService, UsersService],
+  providers: [AppService, UsersService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
