@@ -38,9 +38,7 @@ flowchart LR
 3. Server checks: valid token → rate limit → DTO validation → session belongs to user → quota.
 4. Server loads the latest 20 messages, builds the system prompt (level, focus area, support language), and calls Gemini using the user's own key if saved (decrypted with `ENCRYPTION_KEY`), otherwise the app key (`GOOGLE_API_KEY`).
 5. On success: save the user message and the AI reply, count one call against the quota (`fallbackCount`, app key only), return the reply.
-6. On failure: return an error. Nothing is saved or counted.
-
-> Target behaviour. Still to come in branch 2: today the user message is saved before the AI call, history is the first 20 messages, and Gemini failures are saved and counted as tutor replies.
+6. On failure: return an error (502/503, or 400 if the user's own key is rejected). Nothing is saved or counted. Each call has a 20 s timeout and one retry.
 7. Client shows the reply; the user can play it aloud.
 
 ### Data model (main fields)
@@ -62,12 +60,16 @@ flowchart LR
 | GET | `/chat/sessions/:id/messages` | Get a session's messages (owner only) |
 | POST | `/chat/send-message` | Send a message, get the tutor's reply (15 per minute per IP) |
 | DELETE | `/chat/sessions/:id` | Delete a session and its messages (owner only) |
-| PUT | `/users/api-key` | Save own Gemini key |
+| PUT | `/users/api-key` | Save own Gemini key (checked with Gemini first; 400 if invalid) |
 | PUT | `/users/language` | Change support language |
 | GET | `/` | "Hello" stub |
 | GET | `/health` | Health check (**planned**, branch 4) |
 
 All other routes are limited to 60 requests per minute per IP. Limits live in `server/src/common/constants.ts`; the app trusts one proxy hop (`trust proxy`) so the limiter sees real client IPs on Railway. All routes under `/chat` and `/users` require the JWT; `:id` params must be valid Mongo ids. Routes match the controllers in `server/src`; keep this table up to date.
+
+### Shared constants
+
+`shared/constants.json` (repo root) holds the free-call limit, levels, modes and support languages. The server imports it in `server/src/common/constants.ts`, the client in `client/src/constants.js`. Because the server imports a file outside `server/`, its TypeScript `rootDir` is the repo root and the build output is `server/dist/server/src/main.js`.
 
 ### Key design decisions
 
@@ -90,7 +92,7 @@ Branches are done in order, one at a time. Details and status are in `progress-t
 | # | Branch | Goal | Audit issues |
 |---|---|---|---|
 | 1 | `fix/security-hardening` | Rate limiting, ownership checks, strict validation, CORS, shorter JWT for new tokens (existing 30-day tokens keep working) | #1, #4, #8, #9, #11, #12 |
-| 2 | `fix/ai-reliability` | Honest error handling, correct history, fair quota (stays at 5), clearer prompt | #5, #6, #7, #13, #14 |
+| 2 | `fix/ai-reliability` ✅ code done | Honest error handling, correct history, fair quota (stays at 5), clearer prompt | #5, #6, #7, #13, #14 |
 | 3 | `fix/auth-ux` | Login errors stay visible, no crash on bad storage | #2, #10 |
 | 4 | `chore/deploy-config` | SPA routing on Vercel, env docs, real title/favicon/OG tags, health check | #16, #17, #23, #29 |
 | 5 | `feature/email-verification` | Verify emails with Resend; clean up unused email env vars | #3 |

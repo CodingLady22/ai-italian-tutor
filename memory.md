@@ -1,54 +1,46 @@
-# Memory — AI Italian Tutor: audit, docs alignment, branch 1 (security hardening)
+# Memory — AI Italian Tutor: branch 2 (fix/ai-reliability)
 
 Last updated: 2026-10-12
 
 ## What was built
 
-**Audit (read-only, no code changed):** 30 findings saved in `docs/context/audit-2026-10.md`. Issue numbers `#1`–`#30` are used everywhere.
+`fix/security-hardening` is merged (PR #26). Branch `fix/ai-reliability` (from `main`) has #5, #6, #7, #13, #14 done and is committed with the PR open (see Current state).
 
-**Docs aligned to the real repo (already merged to `main` via PR #25):** `AGENTS.md` moved to `app/` (git root); `docs/context/{project-overview,progress-tracker,audit-2026-10}.md`; real env var names, routes, field names and folder layout.
-
-**Also merged via PR #25:** `PrivateRoute.jsx` / `PublicRoute.jsx` extracted from `App.jsx`; axios fallback port 3000; `server/.env.example` fixed (uppercase `PORT`, `FRONTEND_URL`); new `client/.env.example` (#17 done).
-
-**Branch `fix/security-hardening` (from `main`, NOT committed yet):**
-- Server: global `ThrottlerGuard` + per-route limits, `trust proxy`, ownership check on message listing, Mongo-id validation on `:id` params, DTOs with `@IsIn`/`@MaxLength` (chat, register, login, users), JWT 7d for new tokens, anchored CORS regex without `credentials`, 409 on Mongo duplicate key.
-- New files: `server/src/common/constants.ts`, `common/trim.transform.ts`, `users/dto/update-api-key.dto.ts`, `users/dto/update-language.dto.ts`, specs `common/throttling.spec.ts`, `common/dto-validation.spec.ts`.
-- Rewritten specs: `chat/chat.service.spec.ts`, `auth/auth.service.spec.ts`.
-- Client: `maxLength={80}` on the focus-area input in `Dashboard.jsx`.
-- Docs: tracker (ticked, change log, "Found during work"), overview, AGENTS.md updated.
+- `shared/constants.json` (repo root): free-call limit (5), levels, modes, support languages. Imported by `server/src/common/constants.ts` and the new `client/src/constants.js`. `Register.jsx`, `Dashboard.jsx`, `ChatInterface.jsx` use it instead of hardcoded lists and `5`.
+- `server/src/ai/ai.service.ts` rewritten: errors become 502/503 (user key rejected = 400), 20 s timeout, one retry, `validateApiKey()`, new system prompt (`buildSystemPrompt`).
+- `server/src/chat/chat.service.ts`: Gemini is called before anything is saved; only successful app-key calls count; history = latest 20.
+- `PUT /users/api-key` validates the key first (`users.controller.ts`, `users.module.ts` imports `AiModule`).
+- New/replaced specs: `ai/ai.service.spec.ts`, `chat/chat-reliability.spec.ts`, `users/users.controller.spec.ts`.
+- Docs: tracker, overview, AGENTS.md updated; AGENTS.md now has a PR-files rule.
 
 ## Decisions made
 
-- **Free tier stays at 5 AI calls per user** (opener counts as one). Reason: owner uses the free Gemini tier and must not incur cost. Do not raise without approval.
-- Existing 30-day JWTs keep working until expiry; only newly issued tokens get 7 days.
-- Env var names are NOT renamed (`DB_URL`, `GOOGLE_API_KEY`, `ENCRYPTION_KEY`): they are set in Railway/Vercel. Docs follow the code, not the other way round.
-- Rate limits are per IP (global throttler runs before the JWT guard). Limits: signup 5/min, login 10/min, start-session 5/min, send-message 15/min, default 60/min.
-- Login password cap is 128 (looser than signup's 72, bcrypt limit) so older accounts can still log in.
-- Docs are tracked in git now (`.gitignore` only ignores `docs/syllabi.txt`).
-- Dashboard.jsx split is deferred to Phase 2 (can't verify UI behaviour without running the app).
-- Workflow rule: one branch at a time; only fix issues assigned to the current branch; log anything else under "Found during work" in the tracker.
+- Shared constants live in `shared/constants.json`, imported by both sides (owner's decision).
+- Server TypeScript `rootDir` is `..`, so build output is `server/dist/server/src/main.js`; `start:prod` and `nest-cli.json` `entryFile` were updated.
+- Free tier stays at 5; opener counts as one; env var names are not renamed; existing 30-day JWTs stay valid; limits are per IP.
+- PR descriptions list only files inside `client/` and `server/`; anything else (shared/, docs, AGENTS.md) is described in prose under Docs / Major changes.
+- Email verification (branch 5): owner leans towards skipping it and not mentioning email in the post. Not confirmed.
 
 ## Problems solved
 
-- `ParseMongoIdPipe` does not exist in Nest 11.1.9 → used a `SessionIdParamDto` with `@IsMongoId()` instead.
-- Without `trust proxy`, all Railway traffic would share one IP and one rate-limit bucket → `app.set('trust proxy', 1)` in `main.ts`.
-- Server `npm run lint` is broken (ESM config error) and uses `--fix`; run `npx eslint` directly once #25 is fixed; for now only `tsc --noEmit` is a reliable static check.
-- Shell heredocs with nested quotes failed on Windows Git Bash; use script files (Write tool) instead.
+- Git Bash heredocs with nested quotes fail: use the Write tool for files with quotes/backticks.
+- `jest.resetAllMocks()` wipes a `jest.fn()` constructor mock: mock `GoogleGenAI` as a plain class.
+- Importing JSON from outside `server/` requires `resolveJsonModule` and `rootDir: ".."` (and the dist path change above).
+- Vite needs `server.fs.allow: ['..']` to import `../shared/constants.json`.
 
 ## Current state
 
-- `tsc --noEmit` passes. 29 new tests pass. Full server suite: 5 of 9 suites pass; 4 old scaffold specs still fail (`users.service`, `auth.controller`, `chat.controller`, `ai.service`), planned for branch 7 (#24).
-- Not verified: live behaviour on Railway/Vercel, the trust-proxy hop count, any end-to-end run against Mongo/Gemini, server ESLint.
-- Branch `fix/security-hardening` has uncommitted changes (about 20 server/client files plus docs).
+- Server `tsc` clean, client build clean. Server tests: 55 pass, 3 old scaffold specs fail (`users.service`, `auth.controller`, `chat.controller`; branch 7, #24).
+- Not verified: live Gemini calls, Mongo end to end, Railway start command with the new dist path, Vercel building with `shared/` outside the client folder, server ESLint (broken, #25).
+- The client has no friendly error state yet for 502/503 on send (#21, branch 6).
 
 ## Next session starts with
 
-1. Review and commit `fix/security-hardening` (commit message must end with the Claude co-author line), open the PR, merge.
-2. Then start branch 2, `fix/ai-reliability`: #6 Gemini errors → 502/503 (not saved or counted, add timeout + one retry), #14 latest 20 messages, #5 count only successful calls and move the free limit (5) into one shared constant, #7 validate the user's API key on save, #13 prompt fixes (numbering, level vs focus_area, Italian-only scope, injection handling).
+1. Check the PR for `fix/ai-reliability` is merged, then update the tracker (mark branch 2 ✅ merged).
+2. Start branch 3 `fix/auth-ux`: #2 no redirect on 401 from `/auth/login` (keep "Invalid credentials"), #10 try/catch around `JSON.parse(storedUser)` and provide `loading` from `AuthContext`.
 
 ## Open questions
 
-- How to share constants (levels, modes, languages, free limit) between the separate `client` and `server` packages? Needs a decision in branch 2.
-- Is `trust proxy: 1` correct for Railway's setup? Verify after deploy that two clients are not throttled together.
-- Is email verification (branch 5) in scope for the demo, or skip it and don't mention email in the LinkedIn post?
-- Whether `AGENTS.md` should be re-read at session start: the harness once reported it "no longer present" after the move; it now lives at `app/AGENTS.md`.
+- `trust proxy: 1` on Railway: verify by calling a limited endpoint (e.g. `/auth/login`) from two different networks after deploy, or log `req.ip` and compare with your public IP.
+- Does Railway/Vercel deploy still work with `shared/` and the new `dist/server/src/main` path? Check on first deploy (`chore/deploy-config`).
+- Email verification in or out of the demo (leaning out).
