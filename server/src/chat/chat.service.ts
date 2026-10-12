@@ -6,6 +6,8 @@ import { ChatMessage, ChatMessageDocument } from './schema/chat-message.schema';
 import { AiService } from '../ai/ai.service';
 import { CreateChatDto, sendMessageDto } from './dto/create-chat.dto';
 import { UsersService } from '../users/users.service';
+import { UserDocument } from '../auth/schema/user.schema';
+import { FREE_CALL_LIMIT, AI_HISTORY_LIMIT } from '../common/constants';
 
 @Injectable()
 export class ChatService {
@@ -17,46 +19,50 @@ export class ChatService {
     private usersService: UsersService,
   ) {}
 
-  async startSession(userId: string, dto: CreateChatDto) {
-    const user = await this.usersService.findOneById(userId);
-    
-    // Check fallback limit
-    if (!user?.geminiApiKey && (user?.fallbackCount ?? 0) >= 5) {
+  private assertWithinFreeLimit(user: UserDocument | null) {
+    if (!user?.geminiApiKey && (user?.fallbackCount ?? 0) >= FREE_CALL_LIMIT) {
       throw new ForbiddenException('You have reached the limit of free messages. Please add your own Gemini API key in settings to continue.');
     }
+  }
 
-    const session = new this.sessionModel({
-      user_id: userId,
-      ...dto
-    })
-    const savedSession = await session.save();
+  /** Counts one free call, but only when the app key (not the user's own key) was used. */
+  private async countFreeCall(user: UserDocument | null, userId: string): Promise<number> {
+    const current = user?.fallbackCount ?? 0;
+    if (user?.geminiApiKey) return current;
+    const updatedUser = await this.usersService.incrementFallbackCount(userId);
+    return updatedUser?.fallbackCount ?? current + 1;
+  }
 
+  async startSession(userId: string, dto: CreateChatDto) {
+    const user = await this.usersService.findOneById(userId);
+    this.assertWithinFreeLimit(user);
+
+    // Ask Gemini first: if it fails nothing is saved and nothing is counted
     const initialMessage = await this.authAiService.generateResponse(
       [],
       `Inizia la conversazione come tutor amichevole. Il livello è ${dto.level}, ${dto.mode === 'grammar' ? 'insegneremo' : 'parleremo di'}: ${dto.focus_area}. Saluta e fai una domanda per iniziare.`,
-      // `Per favore, inizia la conversazione presentandoti come tutor e introducendo il nostro argomento: ${dto.focus_area}.`,
       { level: dto.level, focus_area: dto.focus_area, support_language: user?.supportLanguage || 'English' },
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
     );
 
-    // Increment fallback count if no personal API key was used
-    let updatedFallbackCount = user?.fallbackCount ?? 0;
-    if (!user?.geminiApiKey) {
-      const updatedUser = await this.usersService.incrementFallbackCount(userId);
-      updatedFallbackCount = updatedUser?.fallbackCount ?? updatedFallbackCount;
-    }
+    const savedSession = await new this.sessionModel({
+      user_id: userId,
+      ...dto
+    }).save();
 
     const firstMsg = new this.messageModel({
       session_id: savedSession._id,
       sender: 'ai',
       content: initialMessage,
     });
-    await firstMsg.save()
+    await firstMsg.save();
+
+    const fallbackCount = await this.countFreeCall(user, userId);
 
     return {
       session: savedSession,
       firstMessage: firstMsg,
-      fallbackCount: updatedFallbackCount
+      fallbackCount
     };
   }
 
@@ -76,56 +82,47 @@ export class ChatService {
     if(!session) throw new NotFoundException('Chat session not found');
 
     const user = await this.usersService.findOneById(userId);
+    this.assertWithinFreeLimit(user);
 
-    // Check fallback limit
-    if (!user?.geminiApiKey && (user?.fallbackCount ?? 0) >= 5) {
-      throw new ForbiddenException('You have reached the limit of free messages. Please add your own Gemini API key in settings to continue.');
-    }
-
-    const userMsg = new this.messageModel({
-      session_id: dto.sessionId,
-      sender: 'user',
-      content: dto.message,
-    });
-    await userMsg.save();
-
-    const historyStored = await this.messageModel
+    // Latest messages, oldest first. The new message is not saved yet, so it is not in here.
+    const latestFirst = await this.messageModel
       .find({ session_id: dto.sessionId })
-      .sort({ createdAt: 1 })
-      .limit(20) 
+      .sort({ createdAt: -1 })
+      .limit(AI_HISTORY_LIMIT)
       .exec();
 
-    const history = historyStored.slice(0, -1).map((msg) => ({
+    const history = latestFirst.reverse().map((msg) => ({
       role: msg.sender === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }],
-    }))
+    }));
 
+    // If Gemini fails this throws before anything is saved or counted
     const aiResponseText = await this.authAiService.generateResponse(
       history,
       dto.message,
       { level: session.level, focus_area: session.focus_area, support_language: user?.supportLanguage || 'English' },
       user?.geminiApiKey ? this.usersService.decryptApiKey(user.geminiApiKey) : undefined
-    )
+    );
 
-    // Increment fallback count if no personal API key was used
-    let updatedFallbackCount = user?.fallbackCount ?? 0;
-    if (!user?.geminiApiKey) {
-      const updatedUser = await this.usersService.incrementFallbackCount(userId);
-      updatedFallbackCount = updatedUser?.fallbackCount ?? updatedFallbackCount;
-    }
+    await new this.messageModel({
+      session_id: dto.sessionId,
+      sender: 'user',
+      content: dto.message,
+    }).save();
 
     const aiMsg = new this.messageModel({
       session_id: dto.sessionId,
       sender: 'ai',
       content: aiResponseText
     });
+    await aiMsg.save();
 
-    await aiMsg.save()
+    const fallbackCount = await this.countFreeCall(user, userId);
 
     return {
       ...aiMsg.toObject(),
-      fallbackCount: updatedFallbackCount
-    }
+      fallbackCount
+    };
   }
 
   async deleteSession(userId: string, sessionId: string) {

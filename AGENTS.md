@@ -32,6 +32,7 @@ app/                       git repository root
       api/
         axios.js           axios instance + global 401 interceptor
         grammarTopics.js   grammar focus areas per level (A1–B1)
+      constants.js         re-exports shared/constants.json
       context/AuthContext.jsx
       hooks/useTranslation.js
       i18n/translations.js all UI strings
@@ -48,11 +49,13 @@ app/                       git repository root
       users/               users.controller/service/module, dto/
       chat/                chat.controller/service/module, dto/create-chat.dto.ts, schema/
       ai/                  ai.service.ts (Gemini calls + system prompt)
-      common/constants.ts  levels, modes, languages, field limits, rate limits
+      common/constants.ts  re-exports shared values, plus field limits, rate limits, AI settings
       common/utils/encryption.util.ts   AES-256-CBC for stored user API keys
     test/                  e2e tests
     .env.example
     railway.json
+  shared/
+    constants.json         free-call limit, levels, modes, support languages (client + server import it)
   docs/
     context/               project-overview.md, progress-tracker.md, audit-2026-10.md
     syllabi.txt
@@ -69,6 +72,7 @@ app/                       git repository root
 cd app/server
 npm install
 npm run start:dev      # dev server, default port 3000
+npm run build          # output: dist/server/src/main.js (start:prod runs it)
 npm test               # unit tests
 npm run test:e2e       # e2e tests
 npm run lint           # WARNING: currently runs with --fix and the config is broken (see #25).
@@ -124,7 +128,7 @@ Never commit `.env` files. Keep `.env.example` in sync whenever you add or renam
 - Only successful Gemini calls on the app key count. Users with their own key are not counted.
 
 ### Shared constants
-- Values used by both client and server (free message limit, levels, modes) live in one place and are imported, not hardcoded twice.
+- Values used by both client and server (free message limit, levels, modes, support languages) live in `shared/constants.json` and are imported, not hardcoded twice. Server-only values stay in `server/src/common/constants.ts`.
 
 ### Frontend
 - All user-visible text goes through `client/src/i18n/translations.js` (via `useTranslation`). No hardcoded English strings.
@@ -143,4 +147,5 @@ Never commit `.env` files. Keep `.env.example` in sync whenever you add or renam
 2. Only fix the audit issues assigned to the current branch. If you notice something else, add it to the tracker's "Found during work" section instead of fixing it.
 3. Before finishing, run tests and lint for the parts you changed.
 4. Update `docs/context/progress-tracker.md`: tick completed tasks and add a change-log entry (date, branch, what changed, files touched).
-5. If you change architecture, endpoints, env vars, or commands, update `docs/context/project-overview.md` and this file.
+5. **Pull requests:** in the "Files affected" list of the PR description, mention only files inside `client/` and `server/`. Describe changes elsewhere (`shared/`, `docs/`, `AGENTS.md`, root config) in prose under "Major changes", not as file paths. Use `.github/pull_request_template.md`.
+6. If you change architecture, endpoints, env vars, or commands, update `docs/context/project-overview.md` and this file.

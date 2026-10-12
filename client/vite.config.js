@@ -8,4 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    // allow importing ../shared/constants.json (outside the client folder)
+    fs: { allow: ['..'] },
+  },
 })

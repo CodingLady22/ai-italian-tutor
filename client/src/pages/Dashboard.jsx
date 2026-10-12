@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "../hooks/useTranslation";
+import { FREE_CALL_LIMIT, LEVELS, SUPPORT_LANGUAGES } from "../constants";
 import {
   LogOut,
   Plus,
@@ -291,13 +292,11 @@ export default function Dashboard() {
                     onChange={(e) => setSupportLanguageInput(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none text-sm bg-white"
                   >
-                    <option value="English">English</option>
-                    <option value="French">French</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="Portuguese">Portuguese</option>
-                    <option value="Italian">Italian</option>
-                    <option value="Ukrainian">Ukrainian</option>
-                    <option value="Arabic">Arabic (Morocco)</option>
+                    {SUPPORT_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang === "Arabic" ? "Arabic (Morocco)" : lang}
+                      </option>
+                    ))}
                   </select>
                   <p className="mt-2 text-xs text-gray-500 leading-relaxed">
                     {t("supportLanguageHelpText")}
@@ -444,7 +443,7 @@ export default function Dashboard() {
           <div className="bg-amber-50 border-b border-amber-100 p-3 flex items-center justify-center gap-2 text-amber-800 text-sm">
             <AlertCircle size={16} />
             <span>
-              {user?.fallbackCount >= 5 ? (
+              {user?.fallbackCount >= FREE_CALL_LIMIT ? (
                 <>
                   {t("freeLimitReached1")}
                   <button
@@ -457,7 +456,7 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  {t("youHave")} <b>{5 - (user?.fallbackCount || 0)}</b>{" "}
+                  {t("youHave")} <b>{FREE_CALL_LIMIT - (user?.fallbackCount || 0)}</b>{" "}
                   {t("freeMessagesLeft")}
                   <button
                     onClick={() => setIsSettingsOpen(true)}
@@ -508,7 +507,7 @@ export default function Dashboard() {
                     }
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none transition-all"
                   >
-                    {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => (
+                    {LEVELS.map((l) => (
                       <option key={l} value={l}>
                         {l}
                       </option>

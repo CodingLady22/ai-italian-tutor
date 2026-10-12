@@ -2,6 +2,16 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import { UserPlus, Eye, EyeOff } from "lucide-react";
+import { LEVELS, SUPPORT_LANGUAGES } from "../constants";
+
+const LEVEL_LABELS = {
+  A1: "Beginner",
+  A2: "Elementary",
+  B1: "Intermediate",
+  B2: "Upper Intermediate",
+  C1: "Advanced",
+  C2: "Mastery",
+};
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -130,12 +140,11 @@ export default function Register() {
                 onChange={(e) => setLevel(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
               >
-                <option value="A1">A1 - Beginner</option>
-                <option value="A2">A2 - Elementary</option>
-                <option value="B1">B1 - Intermediate</option>
-                <option value="B2">B2 - Upper Intermediate</option>
-                <option value="C1">C1 - Advanced</option>
-                <option value="C2">C2 - Mastery</option>
+                {LEVELS.map((l) => (
+                  <option key={l} value={l}>
+                    {l} - {LEVEL_LABELS[l]}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -148,13 +157,11 @@ export default function Register() {
                 onChange={(e) => setSupportLanguage(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
               >
-                <option value="English">English</option>
-                <option value="French">French</option>
-                <option value="Spanish">Spanish</option>
-                <option value="Portuguese">Portuguese</option>
-                <option value="Italian">Italian</option>
-                <option value="Ukrainian">Ukrainian</option>
-                <option value="Arabic">Arabic (Morocco)</option>
+                {SUPPORT_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang === "Arabic" ? "Arabic (Morocco)" : lang}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -10,6 +10,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import api from "../api/axios";
+import { FREE_CALL_LIMIT } from "../constants";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../hooks/useTranslation";
 
@@ -171,7 +172,7 @@ export default function ChatInterface({ session, onLimitReached }) {
     );
   }
 
-  const freeMessagesLeft = 5 - (user?.fallbackCount || 0);
+  const freeMessagesLeft = FREE_CALL_LIMIT - (user?.fallbackCount || 0);
   const showUsageWarning = !user?.hasApiKey && freeMessagesLeft >= 0;
 
   // Show error card if explicitly set or if limit is reached

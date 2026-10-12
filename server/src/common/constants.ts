@@ -1,16 +1,13 @@
-export const ITALIAN_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
+import shared from '../../../shared/constants.json';
 
-export const CHAT_MODES = ['grammar', 'topic'] as const;
+// Values shared with the client live in app/shared/constants.json
+export const FREE_CALL_LIMIT: number = shared.freeCallLimit;
 
-export const SUPPORT_LANGUAGES = [
-  'English',
-  'French',
-  'Spanish',
-  'Portuguese',
-  'Italian',
-  'Ukrainian',
-  'Arabic',
-] as const;
+export const ITALIAN_LEVELS = shared.levels as readonly string[];
+
+export const CHAT_MODES = shared.modes as readonly string[];
+
+export const SUPPORT_LANGUAGES = shared.supportLanguages as readonly string[];
 
 export const MAX_FOCUS_AREA_LENGTH = 80;
 export const MAX_MESSAGE_LENGTH = 1000;
@@ -28,3 +25,8 @@ export const SIGNUP_THROTTLE = { limit: 5, ttl: 60_000 };
 export const LOGIN_THROTTLE = { limit: 10, ttl: 60_000 };
 export const START_SESSION_THROTTLE = { limit: 5, ttl: 60_000 };
 export const SEND_MESSAGE_THROTTLE = { limit: 15, ttl: 60_000 };
+
+export const AI_MODEL = 'gemini-2.5-flash-lite';
+export const AI_REQUEST_TIMEOUT_MS = 20_000;
+export const AI_RETRY_DELAY_MS = 500;
+export const AI_HISTORY_LIMIT = 20;
