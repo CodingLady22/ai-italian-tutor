@@ -41,13 +41,14 @@ app/                       git repository root
     .env.example
   server/                  NestJS API
     src/
-      main.ts              bootstrap, CORS, global ValidationPipe
+      main.ts              bootstrap, CORS, trust proxy, global ValidationPipe
       app.module.ts
       app.controller.ts    root "Hello" stub
       auth/                auth.controller/service/module, jwt.strategy.ts, dto/, schema/user.schema.ts
       users/               users.controller/service/module, dto/
       chat/                chat.controller/service/module, dto/create-chat.dto.ts, schema/
       ai/                  ai.service.ts (Gemini calls + system prompt)
+      common/constants.ts  levels, modes, languages, field limits, rate limits
       common/utils/encryption.util.ts   AES-256-CBC for stored user API keys
     test/                  e2e tests
     .env.example
@@ -108,7 +109,7 @@ Never commit `.env` files. Keep `.env.example` in sync whenever you add or renam
 ### Security
 - **Validate every request body with a DTO.** Use `@IsIn` for fixed choices (level, mode, language) and `@MaxLength` on every free-text field.
 - **Check ownership on every resource.** Any route that reads or changes a session or message must confirm it belongs to the logged-in user (`findOne({ _id, user_id })`).
-- **Rate-limit anything that calls Gemini or touches auth.** `ThrottlerModule` must stay registered globally.
+- **Rate-limit anything that calls Gemini or touches auth.** `ThrottlerModule` and the global `ThrottlerGuard` (in `app.module.ts`) must stay registered. Put new limits in `common/constants.ts`.
 - Never trust values from the client for limits or counts (quota, message count, level rules). The server decides.
 - Never log or return API keys, tokens, or passwords.
 

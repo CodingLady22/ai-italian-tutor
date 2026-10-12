@@ -64,8 +64,10 @@ export class ChatService {
     return this.sessionModel.find({ user_id: userId}).sort({ createdAt: -1 }).exec();
   }
 
-  async getSessionMessages(sessionId: string) {
-    // return this.sessionModel.find({ session_id: sessionId }).sort({ createdAt: 1 }).exec();
+  async getSessionMessages(userId: string, sessionId: string) {
+    const session = await this.sessionModel.findOne({ _id: sessionId, user_id: userId });
+    if (!session) throw new NotFoundException('Chat session not found');
+
     return this.messageModel.find({ session_id: sessionId }).sort({ createdAt: 1 }).exec();
   }
 

@@ -592,6 +592,7 @@ export default function Dashboard() {
                           : t("egGrammar")
                       }
                       value={newSessionData.focus_area}
+                      maxLength={80}
                       onChange={(e) =>
                         setNewSessionData({
                           ...newSessionData,

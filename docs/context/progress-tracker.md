@@ -1,6 +1,6 @@
 # Progress Tracker
 
-**Current branch:** —
+**Current branch:** `fix/security-hardening` (code done, awaiting review)
 **Phase:** 1 (demo-ready)
 **Last updated:** 2026-10-09
 
@@ -12,14 +12,14 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 
 ## Phase 1: Demo-ready
 
-### 1. `fix/security-hardening` ⬜
-- [ ] #1 Register `ThrottlerModule.forRoot()` and a global `ThrottlerGuard`; stricter limit on `/auth/*`
-- [ ] #4 Ownership check on `GET /chat/sessions/:id/messages`
-- [ ] #8 Move `MaxLength`/`MinLength` from `sessionId` to `message`; `@IsIn` for level/mode/languages; cap `focus_area` at ~80 characters; add DTOs for users endpoints
-- [ ] #9 Shorten JWT expiry to 7 days for newly issued tokens. Existing 30-day tokens must keep working until they expire (same secret, no revocation)
-- [ ] #11 Anchor the CORS regex; remove `credentials: true`
-- [ ] #12 `@IsIn`/`@MaxLength` on register fields; return 409 on Mongo error 11000
-- [ ] Tests: throttling, ownership, signup conflict
+### 1. `fix/security-hardening` 🟡
+- [x] #1 Register `ThrottlerModule.forRoot()` and a global `ThrottlerGuard`; stricter limit on `/auth/*`
+- [x] #4 Ownership check on `GET /chat/sessions/:id/messages`
+- [x] #8 Move `MaxLength`/`MinLength` from `sessionId` to `message`; `@IsIn` for level/mode/languages; cap `focus_area` at ~80 characters; add DTOs for users endpoints
+- [x] #9 Shorten JWT expiry to 7 days for newly issued tokens. Existing 30-day tokens must keep working until they expire (same secret, no revocation)
+- [x] #11 Anchor the CORS regex; remove `credentials: true`
+- [x] #12 `@IsIn`/`@MaxLength` on register fields; return 409 on Mongo error 11000
+- [x] Tests: throttling, ownership, signup conflict
 
 ### 2. `fix/ai-reliability` ⬜
 - [ ] #6 Gemini errors → 502/503; don't save or count them; add timeout + one retry
@@ -81,7 +81,10 @@ Issues spotted while working on another branch. Don't fix them in the current br
 
 | Date | Found on branch | Issue | Planned branch |
 |---|---|---|---|
-| | | | |
+| 2026-10-09 | `fix/security-hardening` | Levels, modes and languages are now defined in `server/src/common/constants.ts` but the client still hardcodes the same lists (`Register.jsx`, `Dashboard.jsx`, `grammarTopics.js`). AGENTS.md asks for one shared place; the sharing mechanism (client and server are separate packages) needs a decision | `fix/ai-reliability` (together with the free-limit constant, #5) |
+| 2026-10-09 | `fix/security-hardening` | `start-session` and `send-message` rate limits are per IP, not per user (the global throttler runs before the JWT guard). Fine for a demo; per-user limits would need a custom tracker | `chore/cleanup` |
+| 2026-10-09 | `fix/security-hardening` | `app.set('trust proxy', 1)` assumes exactly one proxy hop in front of the app on Railway. Not verified live: check after deploy that two different clients are not throttled together | `chore/deploy-config` |
+| 2026-10-09 | `fix/security-hardening` | 4 scaffold specs still fail (`users.service`, `auth.controller`, `chat.controller`, `ai.service`) | `chore/tests-lint` (#24) |
 
 ---
 
@@ -90,6 +93,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-10-09 | `fix/security-hardening` | #1 global `ThrottlerGuard` + per-route limits (signup 5/min, login 10/min, start-session 5/min, send-message 15/min, others 60/min per IP) and `trust proxy`; #4 ownership check on message listing, and `:id` params validated as Mongo ids on list/delete; #8 DTOs with `@IsIn` / `@MaxLength` for chat, register, login and the two users endpoints (new DTO files), `maxLength=80` on the client focus-area input; #9 new tokens last 7 days (existing 30-day tokens still valid); #11 CORS regex anchored, `credentials` removed; #12 register field limits (password max 72 for bcrypt), 409 on Mongo duplicate key. New tests: 29 across `chat.service.spec`, `auth.service.spec`, `common/throttling.spec`, `common/dto-validation.spec`; `tsc` clean | `server/src/app.module.ts`, `main.ts`, `common/constants.ts`, `common/trim.transform.ts`, `auth/*` (controller, service, module, dto), `chat/*` (controller, service, dto), `users/users.controller.ts`, `users/dto/*`, `client/src/pages/Dashboard.jsx`, specs, docs |
 | 2026-10-09 | `main` (no branch) | Moved `AGENTS.md` into `app/` (repo root); saved the audit as `audit-2026-10.md`; extracted `PrivateRoute` and `PublicRoute` from `App.jsx` into `client/src/components/` (behaviour unchanged, `loading` is still undefined, see #10); fixed #17 (axios fallback port 3000, `server/.env.example` uppercase `PORT` + `FRONTEND_URL`, new `client/.env.example`). `Dashboard.jsx` split NOT done, still Phase 2 | `AGENTS.md`, `docs/context/audit-2026-10.md`, `client/src/App.jsx`, `client/src/components/PrivateRoute.jsx`, `client/src/components/PublicRoute.jsx`, `client/src/api/axios.js`, `server/.env.example`, `client/.env.example`, docs |
 | 2026-10-09 | — | Docs aligned with the real repo: paths, env var names (`DB_URL`, `GOOGLE_API_KEY`, `ENCRYPTION_KEY`), routes, data-model field names, folder layout. Free limit stays at 5; existing JWTs stay valid | `AGENTS.md`, `docs/context/project-overview.md`, `docs/context/progress-tracker.md` |
 | 2026-10-08 | — | Audit completed; docs created (`AGENTS.md`, overview, tracker) | `AGENTS.md`, `docs/*` |

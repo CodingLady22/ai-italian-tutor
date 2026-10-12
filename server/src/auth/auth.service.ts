@@ -21,13 +21,22 @@ export class AuthService {
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(registerDto.password, salt);
 
-        const user = await this.usersService.createUser({
-            name: registerDto.name,
-            email: registerDto.email,
-            password: hashPassword,
-            italian_level: registerDto.italian_level || 'A1',
-            supportLanguage: registerDto.supportLanguage || 'English'
-        })
+        let user;
+        try {
+            user = await this.usersService.createUser({
+                name: registerDto.name,
+                email: registerDto.email,
+                password: hashPassword,
+                italian_level: registerDto.italian_level || 'A1',
+                supportLanguage: registerDto.supportLanguage || 'English'
+            })
+        } catch (error) {
+            // Two signups with the same email can both pass the check above; the unique index catches the second
+            if ((error as { code?: number }).code === 11000) {
+                throw new ConflictException('Email already in use')
+            }
+            throw error
+        }
 
         return {
             message: 'Registration successful. You can now log in.',

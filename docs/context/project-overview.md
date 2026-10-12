@@ -40,7 +40,7 @@ flowchart LR
 5. On success: save the user message and the AI reply, count one call against the quota (`fallbackCount`, app key only), return the reply.
 6. On failure: return an error. Nothing is saved or counted.
 
-> Target behaviour. Today (before branches 1–2) the throttler is not registered, the user message is saved before the AI call, history is the first 20 messages, and Gemini failures are saved and counted as tutor replies.
+> Target behaviour. Still to come in branch 2: today the user message is saved before the AI call, history is the first 20 messages, and Gemini failures are saved and counted as tutor replies.
 7. Client shows the reply; the user can play it aloud.
 
 ### Data model (main fields)
@@ -55,19 +55,19 @@ flowchart LR
 
 | Method | Route | Purpose |
 |---|---|---|
-| POST | `/auth/signup` | Create account |
-| POST | `/auth/login` | Get JWT (30-day expiry today) |
-| POST | `/chat/start-session` | Start a session (AI sends an opener) |
+| POST | `/auth/signup` | Create account (5 per minute per IP) |
+| POST | `/auth/login` | Get JWT (7-day expiry for new tokens; 10 per minute per IP) |
+| POST | `/chat/start-session` | Start a session (AI sends an opener; 5 per minute per IP) |
 | GET | `/chat/sessions` | List the user's sessions |
-| GET | `/chat/sessions/:id/messages` | Get a session's messages (owner check **missing today**, fixed in branch 1) |
-| POST | `/chat/send-message` | Send a message, get the tutor's reply (throttle declared, not active today) |
+| GET | `/chat/sessions/:id/messages` | Get a session's messages (owner only) |
+| POST | `/chat/send-message` | Send a message, get the tutor's reply (15 per minute per IP) |
 | DELETE | `/chat/sessions/:id` | Delete a session and its messages (owner only) |
 | PUT | `/users/api-key` | Save own Gemini key |
 | PUT | `/users/language` | Change support language |
 | GET | `/` | "Hello" stub |
 | GET | `/health` | Health check (**planned**, branch 4) |
 
-All routes under `/chat` and `/users` require the JWT. Routes match the controllers in `server/src`; keep this table up to date.
+All other routes are limited to 60 requests per minute per IP. Limits live in `server/src/common/constants.ts`; the app trusts one proxy hop (`trust proxy`) so the limiter sees real client IPs on Railway. All routes under `/chat` and `/users` require the JWT; `:id` params must be valid Mongo ids. Routes match the controllers in `server/src`; keep this table up to date.
 
 ### Key design decisions
 
