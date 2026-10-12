@@ -3,16 +3,40 @@ import api from "../api/axios";
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
+const readStoredUser = () => {
+  try {
     const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user_data");
+    if (!token) return null;
 
-    if (token) {
-      return storedUser ? { token, ...JSON.parse(storedUser) } : { token };
+    const storedUser = localStorage.getItem("user_data");
+    const userData = storedUser ? JSON.parse(storedUser) : null;
+    const isObject = userData && typeof userData === "object";
+    return isObject ? { token, ...userData } : { token };
+  } catch {
+    // Corrupt or blocked storage: drop the bad entry and start logged out.
+    try {
+      localStorage.removeItem("user_data");
+    } catch {
+      /* storage unavailable */
     }
+    return readTokenOnly();
+  }
+};
+
+const readTokenOnly = () => {
+  try {
+    const token = localStorage.getItem("token");
+    return token ? { token } : null;
+  } catch {
     return null;
-  });
+  }
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(readStoredUser);
+  // Storage is read synchronously above, so there is nothing to wait for.
+  // Routes read `loading`; switch this to state if auth ever becomes async.
+  const loading = false;
 
   const login = async (email, password) => {
     try {
@@ -73,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

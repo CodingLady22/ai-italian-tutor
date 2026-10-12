@@ -1,46 +1,37 @@
-# Memory — AI Italian Tutor: branch 2 (fix/ai-reliability)
+# Memory — AI Italian Tutor: branch 3 (fix/auth-ux)
 
 Last updated: 2026-10-12
 
 ## What was built
 
-`fix/security-hardening` is merged (PR #26). Branch `fix/ai-reliability` (from `main`) has #5, #6, #7, #13, #14 done and is committed with the PR open (see Current state).
+Branch 2 `fix/ai-reliability` is merged (PR #27). Branch 3 `fix/auth-ux` (from `main`) is coded and manually tested by the owner; it is being committed with a PR.
 
-- `shared/constants.json` (repo root): free-call limit (5), levels, modes, support languages. Imported by `server/src/common/constants.ts` and the new `client/src/constants.js`. `Register.jsx`, `Dashboard.jsx`, `ChatInterface.jsx` use it instead of hardcoded lists and `5`.
-- `server/src/ai/ai.service.ts` rewritten: errors become 502/503 (user key rejected = 400), 20 s timeout, one retry, `validateApiKey()`, new system prompt (`buildSystemPrompt`).
-- `server/src/chat/chat.service.ts`: Gemini is called before anything is saved; only successful app-key calls count; history = latest 20.
-- `PUT /users/api-key` validates the key first (`users.controller.ts`, `users.module.ts` imports `AiModule`).
-- New/replaced specs: `ai/ai.service.spec.ts`, `chat/chat-reliability.spec.ts`, `users/users.controller.spec.ts`.
-- Docs: tracker, overview, AGENTS.md updated; AGENTS.md now has a PR-files rule.
+- #2: `client/src/api/axios.js` — the 401 interceptor only clears storage and redirects to `/login` when a token was stored and the request is not to `/auth/*`. A wrong password now keeps the "Invalid credentials" message on the login form.
+- #10: `client/src/context/AuthContext.jsx` — stored user is parsed safely (corrupt or non-object `user_data` is dropped, the user keeps their token); context now provides `loading`.
+- `docs/context/progress-tracker.md` updated: branch 2 marked merged, branch 3 ticked, change-log entry added.
 
 ## Decisions made
 
-- Shared constants live in `shared/constants.json`, imported by both sides (owner's decision).
-- Server TypeScript `rootDir` is `..`, so build output is `server/dist/server/src/main.js`; `start:prod` and `nest-cli.json` `entryFile` were updated.
-- Free tier stays at 5; opener counts as one; env var names are not renamed; existing 30-day JWTs stay valid; limits are per IP.
-- PR descriptions list only files inside `client/` and `server/`; anything else (shared/, docs, AGENTS.md) is described in prose under Docs / Major changes.
-- Email verification (branch 5): owner leans towards skipping it and not mentioning email in the post. Not confirmed.
+- `loading` from `AuthContext` is a constant `false`: storage is read synchronously in the `useState` initializer. An effect-based version fails the client lint rule `react-hooks/set-state-in-effect`. Switch to real state only if auth becomes async.
+- Workflow rule from the owner: ALWAYS create a branch before making any changes, unless told otherwise.
+- Earlier decisions still hold: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source, PR "Files affected" lists only `client/` and `server/` files.
 
 ## Problems solved
 
-- Git Bash heredocs with nested quotes fail: use the Write tool for files with quotes/backticks.
-- `jest.resetAllMocks()` wipes a `jest.fn()` constructor mock: mock `GoogleGenAI` as a plain class.
-- Importing JSON from outside `server/` requires `resolveJsonModule` and `rootDir: ".."` (and the dist path change above).
-- Vite needs `server.fs.allow: ['..']` to import `../shared/constants.json`.
+- Client ESLint (`react-hooks/set-state-in-effect`) rejects `setState` inside `useEffect`; use a lazy `useState` initializer for synchronous storage reads.
 
 ## Current state
 
-- Server `tsc` clean, client build clean. Server tests: 55 pass, 3 old scaffold specs fail (`users.service`, `auth.controller`, `chat.controller`; branch 7, #24).
-- Not verified: live Gemini calls, Mongo end to end, Railway start command with the new dist path, Vercel building with `shared/` outside the client folder, server ESLint (broken, #25).
-- The client has no friendly error state yet for 502/503 on send (#21, branch 6).
+- Client lint and build clean. The client has no test runner, so branch 3 was verified manually (wrong-password login, corrupted `user_data`).
+- Owner confirmed Railway and Vercel deploys currently work (this resolves the earlier worry about `shared/` outside the deploy root and the new `dist/server/src/main` path).
+- Still open from before: 3 old scaffold server specs fail (branch 7, #24); server ESLint config broken (#25); no friendly 502/503 send-error state on the client (#21, branch 6).
 
 ## Next session starts with
 
-1. Check the PR for `fix/ai-reliability` is merged, then update the tracker (mark branch 2 ✅ merged).
-2. Start branch 3 `fix/auth-ux`: #2 no redirect on 401 from `/auth/login` (keep "Invalid credentials"), #10 try/catch around `JSON.parse(storedUser)` and provide `loading` from `AuthContext`.
+1. Confirm the `fix/auth-ux` PR is merged, then mark branch 3 ✅ in the tracker.
+2. Create branch 4 `chore/deploy-config` first, then: #16 `client/vercel.json` SPA rewrite (verify refresh on `/dashboard` live), #23 real title/favicon/meta description/OG tags, #29 `GET /health` plus Railway health-check path. #17 is already done.
 
 ## Open questions
 
-- `trust proxy: 1` on Railway: verify by calling a limited endpoint (e.g. `/auth/login`) from two different networks after deploy, or log `req.ip` and compare with your public IP.
-- Does Railway/Vercel deploy still work with `shared/` and the new `dist/server/src/main` path? Check on first deploy (`chore/deploy-config`).
-- Email verification in or out of the demo (leaning out).
+- `trust proxy: 1` on Railway: verify from two different networks (or log `req.ip`) after deploy; planned for `chore/deploy-config`.
+- Email verification in or out of the demo (owner leaning out; not confirmed).
