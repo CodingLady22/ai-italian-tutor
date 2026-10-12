@@ -1,6 +1,6 @@
 # Progress Tracker
 
-**Current branch:** `fix/ai-reliability` (code done, awaiting review)
+**Current branch:** `fix/auth-ux` (code done, awaiting review)
 **Phase:** 1 (demo-ready)
 **Last updated:** 2026-10-12
 
@@ -21,7 +21,7 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [x] #12 `@IsIn`/`@MaxLength` on register fields; return 409 on Mongo error 11000
 - [x] Tests: throttling, ownership, signup conflict
 
-### 2. `fix/ai-reliability` 🟡 (code done, awaiting review)
+### 2. `fix/ai-reliability` ✅ (merged, PR #27)
 - [x] Shared constants: create `shared/constants.json` (levels, modes, languages, free limit) imported by both client and server; replace the hardcoded copies (`Register.jsx`, `Dashboard.jsx`, `grammarTopics.js`, `ChatInterface.jsx`, `server/src/common/constants.ts`)
 - [x] #6 Gemini errors → 502/503; don't save or count them; add timeout + one retry
 - [x] #14 History = latest 20 messages (sort desc, limit, reverse)
@@ -29,9 +29,9 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [x] #7 Validate the user's API key on save; clear message for invalid keys
 - [x] #13 Fix rule numbering and level/focus_area mix-up; add Italian-only scope rule; add prompt-injection handling
 
-### 3. `fix/auth-ux` ⬜
-- [ ] #2 Don't redirect on 401 from `/auth/login`; keep the "Invalid credentials" message
-- [ ] #10 try/catch around `JSON.parse(storedUser)`; provide `loading` from `AuthContext`
+### 3. `fix/auth-ux` 🟡 (code done, awaiting review)
+- [x] #2 Don't redirect on 401 from `/auth/login`; keep the "Invalid credentials" message
+- [x] #10 try/catch around `JSON.parse(storedUser)`; provide `loading` from `AuthContext`
 
 ### 4. `chore/deploy-config` ⬜
 - [ ] #16 Add `client/vercel.json` rewriting `/(.*)` to `/index.html`; test refresh on `/dashboard` live
@@ -98,6 +98,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-10-12 | `fix/auth-ux` | #2 the 401 interceptor no longer redirects for `/auth/*` requests, or when no token was stored, so a wrong password keeps the "Invalid credentials" message on the login form; #10 stored user is parsed safely (corrupt `user_data` is dropped, not a blank screen) and `AuthContext` now provides `loading` (always `false`, since storage is read synchronously). Client lint and build clean; the client has no test runner, so verified manually only | `client/src/api/axios.js`, `client/src/context/AuthContext.jsx`, docs |
 | 2026-10-12 | `fix/ai-reliability` | #6 Gemini failures now throw 502/503 (429, timeouts → 503; user key rejected → 400), with a 20 s timeout and one retry; nothing is saved or counted on failure, and the session opener is generated before the session is created; #14 history = latest 20 messages (sort desc, limit, reverse); #5 only successful app-key calls count (opener = 1), limit stays 5 and now comes from `shared/constants.json` (`freeCallLimit`) on both sides; #7 `PUT /users/api-key` validates the key with a cheap Gemini call first (400 if invalid, 503 if the check cannot run); #13 system prompt rewritten (rule numbering, focus area vs level fix, Italian-only scope, injection handling, session values passed as quoted data); `shared/constants.json` is the single source for levels, modes, support languages and the free limit (server `constants.ts`, client `src/constants.js`). Build: server `rootDir` is now `..`, so output moved to `dist/server/src/main` (`start:prod` and `nest-cli.json` `entryFile` updated); Vite `server.fs.allow`. Tests: 25 new (`ai.service.spec`, `chat/chat-reliability.spec`, `users/users.controller.spec`); server `tsc` and client build clean | `shared/constants.json`, `server/src/ai/ai.service.ts`, `chat/chat.service.ts`, `common/constants.ts`, `users/users.controller.ts`, `users/users.module.ts`, `server/tsconfig.json`, `server/nest-cli.json`, `server/package.json`, `client/src/constants.js`, `client/vite.config.js`, `client/src/pages/Dashboard.jsx`, `Register.jsx`, `components/ChatInterface.jsx`, specs, docs |
 | 2026-10-12 | `fix/ai-reliability` | Branch created from `main`. Docs updated: `fix/security-hardening` marked merged (PR #26); decided on `shared/constants.json` for shared constants; recorded how to verify `trust proxy`; email verification still undecided (leaning skip) | `docs/context/progress-tracker.md`, `docs/context/project-overview.md` |
 | 2026-10-09 | `fix/security-hardening` | #1 global `ThrottlerGuard` + per-route limits (signup 5/min, login 10/min, start-session 5/min, send-message 15/min, others 60/min per IP) and `trust proxy`; #4 ownership check on message listing, and `:id` params validated as Mongo ids on list/delete; #8 DTOs with `@IsIn` / `@MaxLength` for chat, register, login and the two users endpoints (new DTO files), `maxLength=80` on the client focus-area input; #9 new tokens last 7 days (existing 30-day tokens still valid); #11 CORS regex anchored, `credentials` removed; #12 register field limits (password max 72 for bcrypt), 409 on Mongo duplicate key. New tests: 29 across `chat.service.spec`, `auth.service.spec`, `common/throttling.spec`, `common/dto-validation.spec`; `tsc` clean | `server/src/app.module.ts`, `main.ts`, `common/constants.ts`, `common/trim.transform.ts`, `auth/*` (controller, service, module, dto), `chat/*` (controller, service, dto), `users/users.controller.ts`, `users/dto/*`, `client/src/pages/Dashboard.jsx`, specs, docs |
