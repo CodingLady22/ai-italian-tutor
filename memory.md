@@ -1,37 +1,40 @@
-# Memory — AI Italian Tutor: branch 3 (fix/auth-ux)
+# Memory — AI Italian Tutor: branch 4 (chore/deploy-config)
 
-Last updated: 2026-10-12
+Last updated: 2026-10-13
 
 ## What was built
 
-Branch 2 `fix/ai-reliability` is merged (PR #27). Branch 3 `fix/auth-ux` (from `main`) is coded and manually tested by the owner; it is being committed with a PR.
+Branch 3 `fix/auth-ux` is merged (PR #28). Branch 4 `chore/deploy-config` (from `main`) is coded; being committed with a PR (PR number not yet known).
 
-- #2: `client/src/api/axios.js` — the 401 interceptor only clears storage and redirects to `/login` when a token was stored and the request is not to `/auth/*`. A wrong password now keeps the "Invalid credentials" message on the login form.
-- #10: `client/src/context/AuthContext.jsx` — stored user is parsed safely (corrupt or non-object `user_data` is dropped, the user keeps their token); context now provides `loading`.
-- `docs/context/progress-tracker.md` updated: branch 2 marked merged, branch 3 ticked, change-log entry added.
+- #16: `client/vercel.json` SPA rewrite (`/(.*)` to `/index.html`).
+- #23: `client/index.html` has a real title, meta description, Open Graph and Twitter tags; new `client/public/favicon.svg` (Italian flag colours); `client/public/vite.svg` deleted. No `og:image` yet (needs an absolute URL once the Vercel domain is final).
+- #29: `GET /health` in `server/src/app.controller.ts` returns `{status:'ok'}` and is `@SkipThrottle()`; `server/railway.json` sets `healthcheckPath: /health` with a 60 s timeout; test added in `app.controller.spec.ts`.
+- Docs updated: tracker (branch 3 ✅, branch 4 🟡, change-log entry), overview (`/health` live), AGENTS.md (vercel.json in the layout, new PR rule).
+- #17 was already done earlier.
 
 ## Decisions made
 
-- `loading` from `AuthContext` is a constant `false`: storage is read synchronously in the `useState` initializer. An effect-based version fails the client lint rule `react-hooks/set-state-in-effect`. Switch to real state only if auth becomes async.
-- Workflow rule from the owner: ALWAYS create a branch before making any changes, unless told otherwise.
-- Earlier decisions still hold: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source, PR "Files affected" lists only `client/` and `server/` files.
+- PR descriptions mention ONLY files and changes inside `client/` and `server/`, in "Files affected" and in prose. Never mention docs, `AGENTS.md`, `memory.md`, tracker or change-log updates, or root config. Recorded in AGENTS.md workflow rule 5.
+- Always create a branch before making changes.
+- `loading` in `AuthContext` stays a constant `false` (sync storage read; effect-based version fails the `react-hooks/set-state-in-effect` lint rule).
+- Earlier decisions still hold: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source.
 
 ## Problems solved
 
-- Client ESLint (`react-hooks/set-state-in-effect`) rejects `setState` inside `useEffect`; use a lazy `useState` initializer for synchronous storage reads.
+- Editing docs with Python on Windows: the default encoding is cp1252 and crashed on emoji, which left `project-overview.md` empty. Always use `encoding='utf-8'`. Restored with `git checkout` and redone.
 
 ## Current state
 
-- Client lint and build clean. The client has no test runner, so branch 3 was verified manually (wrong-password login, corrupted `user_data`).
-- Owner confirmed Railway and Vercel deploys currently work (this resolves the earlier worry about `shared/` outside the deploy root and the new `dist/server/src/main` path).
+- Server `tsc` clean, `app.controller` spec passes, client build and lint clean.
+- Nothing verified live yet. Railway and Vercel build from GitHub, so the branch must be pushed first. Vercel gives a preview URL per branch; Railway only deploys its tracked branch (usually `main`).
 - Still open from before: 3 old scaffold server specs fail (branch 7, #24); server ESLint config broken (#25); no friendly 502/503 send-error state on the client (#21, branch 6).
 
 ## Next session starts with
 
-1. Confirm the `fix/auth-ux` PR is merged, then mark branch 3 ✅ in the tracker.
-2. Create branch 4 `chore/deploy-config` first, then: #16 `client/vercel.json` SPA rewrite (verify refresh on `/dashboard` live), #23 real title/favicon/meta description/OG tags, #29 `GET /health` plus Railway health-check path. #17 is already done.
+1. Confirm the `chore/deploy-config` PR is merged and deployed, then verify live: refresh on `/dashboard` (no 404), Railway health check passes, and `trust proxy: 1` from two networks (steps are in the tracker's "Found during work"). Tick those items and mark branch 4 ✅.
+2. Then decide on email verification (owner leans out). If skipped, go to branch 6 `fix/voice-ux` (#19, #20, #21); if kept, branch 5 `feature/email-verification` (#3).
 
 ## Open questions
 
-- `trust proxy: 1` on Railway: verify from two different networks (or log `req.ip`) after deploy; planned for `chore/deploy-config`.
 - Email verification in or out of the demo (owner leaning out; not confirmed).
+- `og:image` for link previews: needs the final Vercel domain and an image.
