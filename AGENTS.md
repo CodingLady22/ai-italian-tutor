@@ -39,6 +39,7 @@ app/                       git repository root
       components/          ChatInterface.jsx, PrivateRoute.jsx, PublicRoute.jsx
       pages/               Dashboard.jsx, login.jsx, Register.jsx, LandingPage.jsx, ApiKeyGuide.jsx
     index.html
+    vercel.json        SPA rewrite so deep links work on Vercel
     .env.example
   server/                  NestJS API
     src/
@@ -147,5 +148,5 @@ Never commit `.env` files. Keep `.env.example` in sync whenever you add or renam
 2. Only fix the audit issues assigned to the current branch. If you notice something else, add it to the tracker's "Found during work" section instead of fixing it.
 3. Before finishing, run tests and lint for the parts you changed.
 4. Update `docs/context/progress-tracker.md`: tick completed tasks and add a change-log entry (date, branch, what changed, files touched).
-5. **Pull requests:** in the "Files affected" list of the PR description, mention only files inside `client/` and `server/`. Describe changes elsewhere (`shared/`, `docs/`, `AGENTS.md`, root config) in prose under "Major changes", not as file paths. Use `.github/pull_request_template.md`.
+5. **Pull requests:** the PR description covers only changes to files inside `client/` and `server/`, in both the "Files affected" list and the prose under "Major changes". Do not mention docs or housekeeping files anywhere in the PR: no `docs/`, `AGENTS.md`, `memory.md`, progress-tracker or change-log updates (e.g. never write "memory.md was updated" or "tracker updated"), and no root config. Those files may still be committed; they just aren't described. Use `.github/pull_request_template.md`.
 6. If you change architecture, endpoints, env vars, or commands, update `docs/context/project-overview.md` and this file.

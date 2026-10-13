@@ -1,8 +1,8 @@
 # Progress Tracker
 
-**Current branch:** `fix/auth-ux` (code done, awaiting review)
+**Current branch:** `chore/deploy-config` (code done, awaiting live verification)
 **Phase:** 1 (demo-ready)
-**Last updated:** 2026-10-12
+**Last updated:** 2026-10-13
 
 How to use: tick tasks as they're done, update the branch status, and add a change-log entry at the bottom. Issue numbers (`#1`–`#30`) refer to `audit-2026-10.md` in this folder.
 
@@ -29,15 +29,17 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [x] #7 Validate the user's API key on save; clear message for invalid keys
 - [x] #13 Fix rule numbering and level/focus_area mix-up; add Italian-only scope rule; add prompt-injection handling
 
-### 3. `fix/auth-ux` 🟡 (code done, awaiting review)
+### 3. `fix/auth-ux` ✅ (merged, PR #28)
 - [x] #2 Don't redirect on 401 from `/auth/login`; keep the "Invalid credentials" message
 - [x] #10 try/catch around `JSON.parse(storedUser)`; provide `loading` from `AuthContext`
 
-### 4. `chore/deploy-config` ⬜
-- [ ] #16 Add `client/vercel.json` rewriting `/(.*)` to `/index.html`; test refresh on `/dashboard` live
+### 4. `chore/deploy-config` 🟡 (code done, needs live checks)
+- [x] #16 Add `client/vercel.json` rewriting `/(.*)` to `/index.html`
+- [ ] #16 Test refresh on `/dashboard` live after deploy
 - [x] #17 Align axios fallback to port 3000; fix `.env.example` (uppercase `PORT`, add `FRONTEND_URL`, `VITE_API_URL`). Done 2026-10-09 on `main`, before branching
-- [ ] #23 Real `<title>`, favicon, meta description, OG tags
-- [ ] #29 Add `GET /health`; set it as Railway's health-check path
+- [x] #23 Real `<title>`, favicon, meta description, OG tags (no `og:image` yet: needs an absolute URL once the Vercel domain is final)
+- [x] #29 Add `GET /health` (not throttled); set as Railway's health-check path in `server/railway.json`
+- [ ] Verify `trust proxy: 1` live from two networks (see "Found during work")
 
 ### 5. `feature/email-verification` ⬜
 - [ ] Decision pending: owner leans towards skipping email verification for the demo (and not mentioning email in the post). Confirm before starting this branch
@@ -98,6 +100,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-10-13 | `chore/deploy-config` | #16 `client/vercel.json` SPA rewrite; #23 real title, description, Open Graph/Twitter tags and a new `favicon.svg` (Vite logo removed); #29 `GET /health` returning `{status:'ok'}`, excluded from throttling, and set as Railway's `healthcheckPath` (60 s timeout). New test for the health route. Server `tsc` clean, client build and lint clean. Still to check live: refresh on `/dashboard`, health check on Railway, `trust proxy` | `client/vercel.json`, `client/index.html`, `client/public/favicon.svg`, `client/public/vite.svg` (deleted), `server/src/app.controller.ts`, `server/src/app.controller.spec.ts`, `server/railway.json`, docs |
 | 2026-10-12 | `fix/auth-ux` | #2 the 401 interceptor no longer redirects for `/auth/*` requests, or when no token was stored, so a wrong password keeps the "Invalid credentials" message on the login form; #10 stored user is parsed safely (corrupt `user_data` is dropped, not a blank screen) and `AuthContext` now provides `loading` (always `false`, since storage is read synchronously). Client lint and build clean; the client has no test runner, so verified manually only | `client/src/api/axios.js`, `client/src/context/AuthContext.jsx`, docs |
 | 2026-10-12 | `fix/ai-reliability` | #6 Gemini failures now throw 502/503 (429, timeouts → 503; user key rejected → 400), with a 20 s timeout and one retry; nothing is saved or counted on failure, and the session opener is generated before the session is created; #14 history = latest 20 messages (sort desc, limit, reverse); #5 only successful app-key calls count (opener = 1), limit stays 5 and now comes from `shared/constants.json` (`freeCallLimit`) on both sides; #7 `PUT /users/api-key` validates the key with a cheap Gemini call first (400 if invalid, 503 if the check cannot run); #13 system prompt rewritten (rule numbering, focus area vs level fix, Italian-only scope, injection handling, session values passed as quoted data); `shared/constants.json` is the single source for levels, modes, support languages and the free limit (server `constants.ts`, client `src/constants.js`). Build: server `rootDir` is now `..`, so output moved to `dist/server/src/main` (`start:prod` and `nest-cli.json` `entryFile` updated); Vite `server.fs.allow`. Tests: 25 new (`ai.service.spec`, `chat/chat-reliability.spec`, `users/users.controller.spec`); server `tsc` and client build clean | `shared/constants.json`, `server/src/ai/ai.service.ts`, `chat/chat.service.ts`, `common/constants.ts`, `users/users.controller.ts`, `users/users.module.ts`, `server/tsconfig.json`, `server/nest-cli.json`, `server/package.json`, `client/src/constants.js`, `client/vite.config.js`, `client/src/pages/Dashboard.jsx`, `Register.jsx`, `components/ChatInterface.jsx`, specs, docs |
 | 2026-10-12 | `fix/ai-reliability` | Branch created from `main`. Docs updated: `fix/security-hardening` marked merged (PR #26); decided on `shared/constants.json` for shared constants; recorded how to verify `trust proxy`; email verification still undecided (leaning skip) | `docs/context/progress-tracker.md`, `docs/context/project-overview.md` |

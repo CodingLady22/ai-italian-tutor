@@ -63,7 +63,7 @@ flowchart LR
 | PUT | `/users/api-key` | Save own Gemini key (checked with Gemini first; 400 if invalid) |
 | PUT | `/users/language` | Change support language |
 | GET | `/` | "Hello" stub |
-| GET | `/health` | Health check (**planned**, branch 4) |
+| GET | `/health` | Health check for Railway, returns `{status:'ok'}`, not rate-limited |
 
 All other routes are limited to 60 requests per minute per IP. Limits live in `server/src/common/constants.ts`; the app trusts one proxy hop (`trust proxy`) so the limiter sees real client IPs on Railway. All routes under `/chat` and `/users` require the JWT; `:id` params must be valid Mongo ids. Routes match the controllers in `server/src`; keep this table up to date.
 
@@ -92,8 +92,8 @@ Branches are done in order, one at a time. Details and status are in `progress-t
 | # | Branch | Goal | Audit issues |
 |---|---|---|---|
 | 1 | `fix/security-hardening` | Rate limiting, ownership checks, strict validation, CORS, shorter JWT for new tokens (existing 30-day tokens keep working) | #1, #4, #8, #9, #11, #12 |
-| 2 | `fix/ai-reliability` ✅ code done | Honest error handling, correct history, fair quota (stays at 5), clearer prompt | #5, #6, #7, #13, #14 |
-| 3 | `fix/auth-ux` | Login errors stay visible, no crash on bad storage | #2, #10 |
+| 2 | `fix/ai-reliability` ✅ | Honest error handling, correct history, fair quota (stays at 5), clearer prompt | #5, #6, #7, #13, #14 |
+| 3 | `fix/auth-ux` ✅ | Login errors stay visible, no crash on bad storage | #2, #10 |
 | 4 | `chore/deploy-config` | SPA routing on Vercel, env docs, real title/favicon/OG tags, health check | #16, #17, #23, #29 |
 | 5 | `feature/email-verification` | Verify emails with Resend; clean up unused email env vars | #3 |
 | 6 | `fix/voice-ux` | Visible voice errors, browser support handling, send-failure state | #19, #20, #21 |
