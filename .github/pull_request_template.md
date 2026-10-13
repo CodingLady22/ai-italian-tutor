@@ -1,6 +1,6 @@
 ## Summary
 
-<!-- 2–4 sentences: what this PR does and why. Link the tracker branch and audit issues, e.g. "Branch 1 in docs/context/progress-tracker.md, closes #1, #4". -->
+<!-- 2–4 sentences: what this PR does and why. Mention the audit issues, e.g. "closes #1, #4". Do not mention docs, memory.md or tracker updates. -->
 
 ## Type of change
 
@@ -11,7 +11,6 @@
 - [ ] New feature
 - [ ] Refactor (no behaviour change)
 - [ ] Tests only
-- [ ] Documentation only
 - [ ] Config / deployment
 - [ ] Breaking change (existing behaviour, API or env vars change)
 
@@ -33,12 +32,9 @@
 ### Client
 -
 
-### Docs
--
-
 ## Files affected
 
-<!-- Only files in `server/` and `client/`. Mark each as added / modified / deleted. Put docs and config at the root in the Docs section above. -->
+<!-- Only files in `server/` and `client/`. Mark each as added / modified / deleted. Never list or mention docs, AGENTS.md, memory.md or root config. -->
 
 **Server**
 - `server/src/...` (modified)
@@ -70,7 +66,7 @@
 ## Environment and deployment
 
 - [ ] No new or renamed env vars
-- [ ] If there are: `.env.example` and `docs/context/project-overview.md` are updated, and Railway / Vercel need the new value before deploy
+- [ ] If there are: `.env.example` is updated, and Railway / Vercel need the new value before deploy
 
 <!-- Anything to do after merge: set an env var, wake Railway, check the live site, etc. -->
 
@@ -83,12 +79,6 @@ None
 ## Notes for reviewers
 
 <!-- Known limitations, follow-ups logged under "Found during work" in the tracker, things you are unsure about. -->
-
-## Docs updated
-
-- [ ] `docs/context/progress-tracker.md` (ticks, change log, "Found during work")
-- [ ] `docs/context/project-overview.md` (if routes, architecture or env vars changed)
-- [ ] `AGENTS.md` (if commands, layout or rules changed)
 
 ## Screenshots / recordings
 
