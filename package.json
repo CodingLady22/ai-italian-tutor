@@ -4,5 +4,8 @@
   "scripts": {
     "build": "cd server && npm install && npm run build",
     "start": "cd server && npm run start"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
