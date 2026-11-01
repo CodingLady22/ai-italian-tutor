@@ -15,7 +15,7 @@ Instructions for coding agents working on **AI Italian Tutor**. Read this first,
 | Part | Tech | Hosted on |
 |---|---|---|
 | Frontend | React 19 (Vite, JavaScript) + Tailwind 3 | Vercel |
-| Backend | NestJS 11 (TypeScript) | Railway (Railpack builder) |
+| Backend | NestJS 11 (TypeScript) | Railway (Railpack builder, root directory = repo root, config file `/railway.json`) |
 | Database | MongoDB (Mongoose) | — |
 | AI | Google Gemini (`gemini-2.5-flash-lite`, via `@google/genai`) | — |
 | Auth | JWT (bearer token) via Passport | — |
@@ -54,7 +54,8 @@ app/                       git repository root
       common/utils/encryption.util.ts   AES-256-CBC for stored user API keys
     test/                  e2e tests
     .env.example
-    railway.json
+  railway.json             Railway config (deploys from the repo root, not `server/`)
+  package.json             root build/start scripts that Railway runs (they go into `server/`)
   shared/
     constants.json         free-call limit, levels, modes, support languages (client + server import it)
   docs/

@@ -69,7 +69,7 @@ All other routes are limited to 60 requests per minute per IP. Limits live in `s
 
 ### Shared constants
 
-`shared/constants.json` (repo root) holds the free-call limit, levels, modes and support languages. The server imports it in `server/src/common/constants.ts`, the client in `client/src/constants.js`. Because the server imports a file outside `server/`, its TypeScript `rootDir` is the repo root and the build output is `server/dist/server/src/main.js`.
+`shared/constants.json` (repo root) holds the free-call limit, levels, modes and support languages. The server imports it in `server/src/common/constants.ts`, the client in `client/src/constants.js`. Because the server imports a file outside `server/`, its TypeScript `rootDir` is the repo root and the build output is `server/dist/server/src/main.js`. For the same reason Railway must build from the repo root (not `/server`): root directory = repo root, config file path = `/railway.json`, and the root `package.json` scripts run the server build and start.
 
 ### Key design decisions
 
