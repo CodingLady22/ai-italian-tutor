@@ -1,8 +1,8 @@
 # Progress Tracker
 
-**Current branch:** `fix/railway-root-dir` (Railway deploy fixed, PR pending)
+**Current branch:** `chore/og-image` (PR open)
 **Phase:** 1 (demo-ready)
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-02
 
 How to use: tick tasks as they're done, update the branch status, and add a change-log entry at the bottom. Issue numbers (`#1`–`#30`) refer to `audit-2026-10.md` in this folder.
 
@@ -35,7 +35,8 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 
 ### 4. `chore/deploy-config` 🟡 (code done, needs live checks)
 - [x] #16 Add `client/vercel.json` rewriting `/(.*)` to `/index.html`
-- [ ] #16 Test refresh on `/dashboard` live after deploy
+- [x] #16 Test refresh on `/dashboard` live after deploy (2026-11-02: `/dashboard` and `/login` return 200 from Vercel)
+- [x] `og:image` / `twitter:image` added for the final domain `https://ai-italian-tutor.vercel.app` (branch `chore/og-image`); check the LinkedIn preview after it deploys
 - [x] #17 Align axios fallback to port 3000; fix `.env.example` (uppercase `PORT`, add `FRONTEND_URL`, `VITE_API_URL`). Done 2026-10-09 on `main`, before branching
 - [x] #23 Real `<title>`, favicon, meta description, OG tags (no `og:image` yet: needs an absolute URL once the Vercel domain is final)
 - [x] #29 Add `GET /health` (not throttled); set as Railway's health-check path in `railway.json` (repo root)
@@ -43,7 +44,7 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [ ] Verify `trust proxy: 1` live from two networks (see "Found during work")
 
 ### 5. `feature/email-verification` ⬜
-- [ ] Decision pending: owner leans towards skipping email verification for the demo (and not mentioning email in the post). Confirm before starting this branch
+- [x] Decision 2026-11-02: email verification is skipped for the demo (and email is not mentioned in the post). Deferred until the demo is ready
 - [ ] Verify sending domain in Resend (reuse the setup that worked for AI Digest)
 - [ ] #3 Send verification email on signup; `isVerified` defaults to `false`; set `verificationToken` with expiry
 - [ ] Block AI usage (not login) until verified; add "resend email" option with rate limit
@@ -101,6 +102,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-11-02 | `chore/og-image` | Link-preview image for LinkedIn: `og:image`, `og:image:width/height`, `og:url`, `twitter:image` pointing at the final Vercel domain; `twitter:card` is now `summary_large_image`. New `client/public/og-image.png` (1200x568). `/dashboard` and `/login` verified to return 200 on Vercel. `trust proxy` check still pending | `client/index.html`, `client/public/og-image.png`, docs |
 | 2026-11-01 | `fix/railway-root-dir` | Deploys #27, #28 and #29 had failed on Railway: the service built from `/server`, which cannot see `shared/` (added in #27). Railway now builds from the repo root with config file `/railway.json`: `server/railway.json` moved to the repo root, start command is `cd server && npm run start:prod`, root `package.json` gets `engines.node >=22`. Root `npm run build` verified locally; deploy confirmed working on Railway | `railway.json`, `server/railway.json` (moved), `package.json` (root), docs |
 | 2026-10-13 | `chore/deploy-config` | #16 `client/vercel.json` SPA rewrite; #23 real title, description, Open Graph/Twitter tags and a new `favicon.svg` (Vite logo removed); #29 `GET /health` returning `{status:'ok'}`, excluded from throttling, and set as Railway's `healthcheckPath` (60 s timeout). New test for the health route. Server `tsc` clean, client build and lint clean. Still to check live: refresh on `/dashboard`, health check on Railway, `trust proxy` | `client/vercel.json`, `client/index.html`, `client/public/favicon.svg`, `client/public/vite.svg` (deleted), `server/src/app.controller.ts`, `server/src/app.controller.spec.ts`, `server/railway.json`, docs |
 | 2026-10-12 | `fix/auth-ux` | #2 the 401 interceptor no longer redirects for `/auth/*` requests, or when no token was stored, so a wrong password keeps the "Invalid credentials" message on the login form; #10 stored user is parsed safely (corrupt `user_data` is dropped, not a blank screen) and `AuthContext` now provides `loading` (always `false`, since storage is read synchronously). Client lint and build clean; the client has no test runner, so verified manually only | `client/src/api/axios.js`, `client/src/context/AuthContext.jsx`, docs |
