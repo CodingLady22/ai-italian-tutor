@@ -1,38 +1,41 @@
-# Memory — AI Italian Tutor: branch 4 (chore/deploy-config)
+# Memory — AI Italian Tutor: Railway root-dir fix (fix/railway-root-dir)
 
-Last updated: 2026-10-13
+Last updated: 2026-11-02
 
 ## What was built
 
-Branch 3 `fix/auth-ux` is merged (PR #28). Branch 4 `chore/deploy-config` (from `main`) is coded; being committed with a PR (PR number not yet known).
+Branch 4 `chore/deploy-config` is merged (PR #29): `client/vercel.json` SPA rewrite, real title/description/OG tags and `favicon.svg` in `client/index.html`, and `GET /health` (not throttled) in `server/src/app.controller.ts`.
 
-- #16: `client/vercel.json` SPA rewrite (`/(.*)` to `/index.html`).
-- #23: `client/index.html` has a real title, meta description, Open Graph and Twitter tags; new `client/public/favicon.svg` (Italian flag colours); `client/public/vite.svg` deleted. No `og:image` yet (needs an absolute URL once the Vercel domain is final).
-- #29: `GET /health` in `server/src/app.controller.ts` returns `{status:'ok'}` and is `@SkipThrottle()`; `server/railway.json` sets `healthcheckPath: /health` with a 60 s timeout; test added in `app.controller.spec.ts`.
-- Docs updated: tracker (branch 3 ✅, branch 4 🟡, change-log entry), overview (`/health` live), AGENTS.md (vercel.json in the layout, new PR rule).
-- #17 was already done earlier.
+Railway deploys #27, #28 and #29 had all failed because the service built from `/server` and could not see `shared/` (added in #27). Fix on branch `fix/railway-root-dir` (already pushed by the owner, PR not yet opened):
+- `server/railway.json` moved to the repo root `railway.json`; start command is `cd server && npm run start:prod`; health check path `/health`.
+- Root `package.json` got `engines.node >=22.0.0` (its build/start scripts already go into `server/`).
+- Docs (AGENTS.md layout and Railway row, overview, tracker) updated; these doc edits are uncommitted.
+
+Separate branch `chore/pr-template` (pushed, no PR yet): removed the Docs sections from `.github/pull_request_template.md`.
 
 ## Decisions made
 
-- PR descriptions mention ONLY files and changes inside `client/` and `server/`, in "Files affected" and in prose. Never mention docs, `AGENTS.md`, `memory.md`, tracker or change-log updates, or root config. Recorded in AGENTS.md workflow rule 5.
-- Always create a branch before making changes.
-- `loading` in `AuthContext` stays a constant `false` (sync storage read; effect-based version fails the `react-hooks/set-state-in-effect` lint rule).
-- Earlier decisions still hold: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source.
+- Railway must build from the repo root: Root Directory = repo root, Config file path = `/railway.json`. Owner made these dashboard changes and confirmed the deploy works.
+- PR descriptions mention ONLY `client/` and `server/` files and changes: no docs, AGENTS.md, memory.md, tracker or change-log mentions. Root config changes may only be described in prose as deploy behaviour. Always create a branch before making changes.
+- Earlier decisions still hold: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source, `AuthContext.loading` stays a constant `false`.
 
 ## Problems solved
 
-- Editing docs with Python on Windows: the default encoding is cp1252 and crashed on emoji, which left `project-overview.md` empty. Always use `encoding='utf-8'`. Restored with `git checkout` and redone.
+- Railway "Failed" deploys with every stage "Not started": the build root was `/server`, so `../shared` was missing. Fixed by building from the repo root.
+- Python doc edits on Windows must use `encoding='utf-8'` (default cp1252 crashed and emptied a file once).
+- Locally, the server cannot be booted for a `/health` check without MongoDB; it waits on the DB at startup.
 
 ## Current state
 
-- Server `tsc` clean, `app.controller` spec passes, client build and lint clean.
-- Nothing verified live yet. Railway and Vercel build from GitHub, so the branch must be pushed first. Vercel gives a preview URL per branch; Railway only deploys its tracked branch (usually `main`).
+- Railway deploys and passes the health check again.
+- Not yet verified live: refresh on `/dashboard` on Vercel (no 404), and `trust proxy: 1` from two different networks (steps in the tracker's "Found during work").
 - Still open from before: 3 old scaffold server specs fail (branch 7, #24); server ESLint config broken (#25); no friendly 502/503 send-error state on the client (#21, branch 6).
 
 ## Next session starts with
 
-1. Confirm the `chore/deploy-config` PR is merged and deployed, then verify live: refresh on `/dashboard` (no 404), Railway health check passes, and `trust proxy: 1` from two networks (steps are in the tracker's "Found during work"). Tick those items and mark branch 4 ✅.
-2. Then decide on email verification (owner leans out). If skipped, go to branch 6 `fix/voice-ux` (#19, #20, #21); if kept, branch 5 `feature/email-verification` (#3).
+1. Commit the doc updates on `fix/railway-root-dir`, push, and open the PR (list only `client/` and `server/` files; describe the root config move only as deploy behaviour). Open a PR for `chore/pr-template` too if wanted.
+2. Verify live: `/dashboard` refresh on Vercel and `trust proxy` from two networks; tick them in the tracker and mark branch 4 ✅.
+3. Then decide on email verification (owner leans out): if skipped, start branch 6 `fix/voice-ux` (#19, #20, #21); if kept, branch 5 `feature/email-verification` (#3).
 
 ## Open questions
 
