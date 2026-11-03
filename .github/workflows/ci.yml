@@ -1,0 +1,47 @@
+# The name shown in the "Actions" tab on GitHub
+name: CI
+
+# When to run: on every push to main, and on every pull request
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Job 1: check that the React app builds
+  client:
+    name: Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # download the repo code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4 # install Node.js
+        with:
+          node-version: 22
+          cache: npm # cache npm dependencies
+
+      - name: install dependencies
+        run: npm ci # install dependencies
+        working-directory: client
+
+      - name: build the app
+        run: npm run build # build the app
+        working-directory: client
+
+  # Job 2: check that the NestJS API builds
+  server:
+    name: Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+        working-directory: server
+      - run: npm run build
+        working-directory: server
