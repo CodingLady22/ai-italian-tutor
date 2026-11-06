@@ -105,7 +105,11 @@ describe('AiService', () => {
 
     it('numbers its rules without duplicates', () => {
       const numbers = [...prompt().matchAll(/^\s+(\d+)\. /gm)].map((m) => Number(m[1]));
-      expect(numbers).toEqual([1, 2, 3, 4, 5, 6]);
+      expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    });
+
+    it('asks for corrections in a final 💡 paragraph so the client can speak only the Italian', () => {
+      expect(prompt()).toContain('starts with "💡 "');
     });
 
     it('uses the focus area, not the level, as the topic', () => {

@@ -1,8 +1,8 @@
 # Progress Tracker
 
-**Current branch:** `chore/og-image` (PR open)
+**Current branch:** `fix/voice-ux` (code done, not yet merged)
 **Phase:** 1 (demo-ready)
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-04
 
 How to use: tick tasks as they're done, update the branch status, and add a change-log entry at the bottom. Issue numbers (`#1`–`#30`) refer to `audit-2026-10.md` in this folder.
 
@@ -51,10 +51,10 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [ ] Remove `MAIL_PASS` and any unused `RESEND_*` vars
 - [ ] Fallback plan: if the domain still fails, ship without it and don't mention email in the post
 
-### 6. `fix/voice-ux` ⬜
-- [ ] #19 Inline messages for `not-allowed`, `no-speech`, `network`; try/catch on `start()`; hide/disable mic when unsupported; abort on unmount
-- [ ] #20 Wait for `voiceschanged`; speak only the Italian part; `speechSynthesis.cancel()` on unmount/session switch
-- [ ] #21 Error + retry state for failed sends; avoid duplicate messages; stable `key` (no `Math.random()`)
+### 6. `fix/voice-ux` 🟡 (code done, needs manual check in Chrome)
+- [x] #19 Inline messages for `not-allowed`, `no-speech`, `network`; try/catch on `start()`; hide/disable mic when unsupported; abort on unmount
+- [x] #20 Wait for `voiceschanged`; speak only the Italian part; `speechSynthesis.cancel()` on unmount/session switch
+- [x] #21 Error + retry state for failed sends; avoid duplicate messages; stable `key` (no `Math.random()`)
 
 ### 7. `chore/tests-lint` ⬜
 - [ ] #24 Mock Mongoose models with `getModelToken`; delete empty scaffold tests; all suites pass
@@ -93,6 +93,7 @@ Issues spotted while working on another branch. Don't fix them in the current br
 | 2026-10-09 | `fix/security-hardening` | Levels, modes and languages are now defined in `server/src/common/constants.ts` but the client still hardcodes the same lists (`Register.jsx`, `Dashboard.jsx`, `grammarTopics.js`). AGENTS.md asks for one shared place; the sharing mechanism (client and server are separate packages) needs a decision | `fix/ai-reliability`. **Decision 2026-10-12:** one small `shared/constants.json` imported by both sides |
 | 2026-10-09 | `fix/security-hardening` | `start-session` and `send-message` rate limits are per IP, not per user (the global throttler runs before the JWT guard). Fine for a demo; per-user limits would need a custom tracker | `chore/cleanup` |
 | 2026-10-09 | `fix/security-hardening` | `app.set('trust proxy', 1)` assumes exactly one proxy hop in front of the app on Railway. Not verified live: check after deploy that two different clients are not throttled together | `chore/deploy-config`. **How to verify:** after deploy, hit an endpoint with the limit (e.g. `/auth/login`, 10/min) from two different networks (home wifi and phone data) and confirm each gets its own bucket; also log `req.ip` once and compare it with your public IP. If every client shows the same IP, raise or lower the hop count |
+| 2026-11-06 | `fix/voice-ux` | Refreshing the page while in a chat returns to the new-chat screen: `selectedSession` in `Dashboard.jsx` is only React state, so it is lost on reload. Fix idea: remember the selected session id (URL param or localStorage) | `chore/cleanup` (or its own small branch) |
 | 2026-10-09 | `fix/security-hardening` | 3 scaffold specs still fail (`users.service`, `auth.controller`, `chat.controller`); `ai.service.spec` was replaced on `fix/ai-reliability` | `chore/tests-lint` (#24) |
 
 ---
@@ -102,6 +103,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-11-04 | `fix/voice-ux` | #19 voice input errors (`not-allowed`, `no-speech`, `network`, other) show an inline message instead of `alert()`/console only; `start()` wrapped in try/catch; mic hidden when SpeechRecognition is missing, speaker hidden when speechSynthesis is missing; recognizer aborted on unmount. #20 voices kept fresh via `voiceschanged`; only the Italian part is spoken (tutor prompt rule 7 puts corrections in a final paragraph starting with 💡, the client stops reading at it); speech cancelled on unmount and session switch. #21 a failed send marks the user bubble "Not sent" with a Retry button (no duplicate bubble, the server saves nothing on failure); stable `key`; error cleared on session switch. Mic/speaker titles and 9 new strings moved to i18n in all 7 languages. Client lint and build clean; prompt tests updated and passing (17). Not tested in a real browser yet | `client/src/components/ChatInterface.jsx`, `client/src/utils/speakableText.js`, `client/src/i18n/translations.js`, `server/src/ai/ai.service.ts`, `server/src/ai/ai.service.spec.ts`, docs |
 | 2026-11-02 | `chore/og-image` | Link-preview image for LinkedIn: `og:image`, `og:image:width/height`, `og:url`, `twitter:image` pointing at the final Vercel domain; `twitter:card` is now `summary_large_image`. New `client/public/og-image.png` (1200x568). `/dashboard` and `/login` verified to return 200 on Vercel. `trust proxy` check still pending | `client/index.html`, `client/public/og-image.png`, docs |
 | 2026-11-01 | `fix/railway-root-dir` | Deploys #27, #28 and #29 had failed on Railway: the service built from `/server`, which cannot see `shared/` (added in #27). Railway now builds from the repo root with config file `/railway.json`: `server/railway.json` moved to the repo root, start command is `cd server && npm run start:prod`, root `package.json` gets `engines.node >=22`. Root `npm run build` verified locally; deploy confirmed working on Railway | `railway.json`, `server/railway.json` (moved), `package.json` (root), docs |
 | 2026-10-13 | `chore/deploy-config` | #16 `client/vercel.json` SPA rewrite; #23 real title, description, Open Graph/Twitter tags and a new `favicon.svg` (Vite logo removed); #29 `GET /health` returning `{status:'ok'}`, excluded from throttling, and set as Railway's `healthcheckPath` (60 s timeout). New test for the health route. Server `tsc` clean, client build and lint clean. Still to check live: refresh on `/dashboard`, health check on Railway, `trust proxy` | `client/vercel.json`, `client/index.html`, `client/public/favicon.svg`, `client/public/vite.svg` (deleted), `server/src/app.controller.ts`, `server/src/app.controller.spec.ts`, `server/railway.json`, docs |

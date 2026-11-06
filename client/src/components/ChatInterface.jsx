@@ -3,7 +3,6 @@ import {
   Send,
   User,
   Bot,
-  Loader2,
   Volume2,
   Mic,
   MicOff,
@@ -13,6 +12,24 @@ import api from "../api/axios";
 import { FREE_CALL_LIMIT } from "../constants";
 import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "../hooks/useTranslation";
+import { getSpeakableText } from "../utils/speakableText";
+
+const SpeechRecognition =
+  typeof window !== "undefined" &&
+  (window.SpeechRecognition || window.webkitSpeechRecognition);
+const speechSynthesisSupported =
+  typeof window !== "undefined" && "speechSynthesis" in window;
+
+// Maps SpeechRecognition error codes to translation keys. Codes not listed
+// here (e.g. "aborted") are not shown to the user.
+const VOICE_ERROR_KEYS = {
+  "not-allowed": "voiceErrorDenied",
+  "service-not-allowed": "voiceErrorDenied",
+  "no-speech": "voiceErrorNoSpeech",
+  network: "voiceErrorNetwork",
+  "audio-capture": "voiceErrorGeneric",
+  "language-not-supported": "voiceErrorGeneric",
+};
 
 export default function ChatInterface({ session, onLimitReached }) {
   const { user, updateUser } = useAuth();
@@ -22,75 +39,116 @@ export default function ChatInterface({ session, onLimitReached }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [voiceError, setVoiceError] = useState(null);
   const [currentlySpeaking, setCurrentlySpeaking] = useState(null);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
+  const voicesRef = useRef([]);
 
   // Initialize Speech Recognition
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = "it-IT";
+    if (!SpeechRecognition) return;
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setNewMessage((prev) => prev + (prev ? " " : "") + transcript);
-        setIsListening(false);
-      };
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "it-IT";
 
-      recognitionRef.current.onerror = (event) => {
-        console.error("Speech recognition error", event.error);
-        setIsListening(false);
-      };
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setNewMessage((prev) => prev + (prev ? " " : "") + transcript);
+      setIsListening(false);
+    };
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      const key = VOICE_ERROR_KEYS[event.error];
+      if (key) setVoiceError(key);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      recognition.abort();
+      recognitionRef.current = null;
+    };
   }, []);
 
+  // Chrome loads voices asynchronously, so getVoices() is empty on first call.
+  // Keep the list fresh, and stop any speech when leaving the chat or switching sessions.
+  useEffect(() => {
+    if (!speechSynthesisSupported) return;
+
+    const loadVoices = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+    loadVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
+      window.speechSynthesis.cancel();
+    };
+  }, [session?._id]);
+
   const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert("Speech recognition is not supported in this browser.");
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+
+    if (isListening) {
+      recognition.stop();
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      recognitionRef.current.start();
+    setVoiceError(null);
+    try {
+      recognition.start();
       setIsListening(true);
+    } catch (err) {
+      // start() throws InvalidStateError if recognition is already running
+      console.error("Speech recognition failed to start", err);
+      setVoiceError("voiceErrorGeneric");
+      setIsListening(false);
     }
   };
 
-  const speak = (text, messageId) => {
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      setCurrentlySpeaking(null);
+  const speak = (content, messageId) => {
+    if (!speechSynthesisSupported) return;
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "it-IT";
+    window.speechSynthesis.cancel();
+    setCurrentlySpeaking(null);
 
-      const voices = window.speechSynthesis.getVoices();
-      const italianVoice = voices.find((v) => v.lang.startsWith("it"));
-      if (italianVoice) {
-        utterance.voice = italianVoice;
-      }
+    const utterance = new SpeechSynthesisUtterance(getSpeakableText(content));
+    utterance.lang = "it-IT";
 
-      utterance.onstart = () => setCurrentlySpeaking(messageId);
-      utterance.onend = () => setCurrentlySpeaking(null);
-      utterance.onerror = () => setCurrentlySpeaking(null);
-
-      window.speechSynthesis.speak(utterance);
+    const italianVoice = voicesRef.current.find((v) =>
+      v.lang.toLowerCase().startsWith("it"),
+    );
+    if (italianVoice) {
+      utterance.voice = italianVoice;
     }
+
+    utterance.onstart = () => setCurrentlySpeaking(messageId);
+    utterance.onend = () => setCurrentlySpeaking(null);
+    utterance.onerror = () => setCurrentlySpeaking(null);
+
+    window.speechSynthesis.speak(utterance);
   };
 
   useEffect(() => {
     if (!session?._id) return;
+
+    setError(null);
+    setVoiceError(null);
+    setCurrentlySpeaking(null);
 
     const fetchMessages = async () => {
       try {
@@ -118,27 +176,19 @@ export default function ChatInterface({ session, onLimitReached }) {
     }
   }, [messages, error]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || loading) return;
-
-    const tempMessage = newMessage;
-    setNewMessage("");
+  // The server saves nothing when a send fails, so a retry re-sends the same
+  // text without adding a second bubble.
+  const sendMessage = async (content, tempId) => {
     setLoading(true);
     setError(null);
-
-    const userMessage = {
-      _id: Date.now().toString(),
-      sender: "user",
-      content: tempMessage,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((prev) =>
+      prev.map((m) => (m._id === tempId ? { ...m, failed: false } : m)),
+    );
 
     try {
       const res = await api.post("/chat/send-message", {
         sessionId: session._id,
-        message: tempMessage,
+        message: content,
       });
 
       if (res.data) {
@@ -150,6 +200,9 @@ export default function ChatInterface({ session, onLimitReached }) {
       }
     } catch (err) {
       console.error("Failed to send message", err);
+      setMessages((prev) =>
+        prev.map((m) => (m._id === tempId ? { ...m, failed: true } : m)),
+      );
       if (err.response?.status === 403) {
         const msg = err.response.data.message || t("chatErrorLimit");
         setError(msg);
@@ -162,6 +215,25 @@ export default function ChatInterface({ session, onLimitReached }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || loading) return;
+
+    const content = newMessage;
+    const tempId = `temp-${Date.now()}`;
+    setNewMessage("");
+    setMessages((prev) => [
+      ...prev,
+      {
+        _id: tempId,
+        sender: "user",
+        content,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    sendMessage(content, tempId);
   };
 
   if (!session) {
@@ -220,7 +292,7 @@ export default function ChatInterface({ session, onLimitReached }) {
           const isUser = msg.sender === "user";
           return (
             <div
-              key={msg._id || Math.random()}
+              key={msg._id}
               className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
@@ -247,7 +319,20 @@ export default function ChatInterface({ session, onLimitReached }) {
                   <p className="whitespace-pre-wrap text-sm leading-relaxed pr-6">
                     {msg.content}
                   </p>
-                  {!isUser && (
+                  {isUser && msg.failed && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-red-100">
+                      <span>{t("chatNotSent")}</span>
+                      <button
+                        type="button"
+                        onClick={() => sendMessage(msg.content, msg._id)}
+                        disabled={loading}
+                        className="underline font-medium hover:text-white disabled:opacity-50"
+                      >
+                        {t("chatRetry")}
+                      </button>
+                    </div>
+                  )}
+                  {!isUser && speechSynthesisSupported && (
                     <button
                       onClick={() => speak(msg.content, msg._id)}
                       className={`absolute top-2 right-2 transition-colors ${
@@ -255,7 +340,7 @@ export default function ChatInterface({ session, onLimitReached }) {
                           ? "text-blue-600 animate-pulse"
                           : "text-gray-400 hover:text-blue-600"
                       }`}
-                      title="Speak"
+                      title={t("chatSpeak")}
                     >
                       <Volume2 size={16} />
                     </button>
@@ -301,23 +386,34 @@ export default function ChatInterface({ session, onLimitReached }) {
       </div>
 
       <div className="bg-white border-t p-4 shadow-[0_-1px_3px_rgba(0,0,0,0.05)]">
+        {voiceError && (
+          <div
+            role="alert"
+            className="max-w-4xl mx-auto mb-2 flex items-center gap-2 text-sm text-red-700"
+          >
+            <AlertCircle className="shrink-0" size={16} />
+            <span>{t(voiceError)}</span>
+          </div>
+        )}
         <form
           onSubmit={handleSendMessage}
           className="flex gap-2 max-w-4xl mx-auto"
         >
-          <button
-            type="button"
-            onClick={toggleListening}
-            className={`p-3 rounded-full border transition-colors ${
-              isListening
-                ? "bg-red-100 border-red-300 text-red-600 animate-pulse"
-                : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100"
-            }`}
-            disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
-            title={isListening ? "Stop Listening" : "Start Voice Input"}
-          >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
+          {SpeechRecognition && (
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`p-3 rounded-full border transition-colors ${
+                isListening
+                  ? "bg-red-100 border-red-300 text-red-600 animate-pulse"
+                  : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100"
+              }`}
+              disabled={loading || (freeMessagesLeft <= 0 && !user?.hasApiKey)}
+              title={isListening ? t("chatMicStop") : t("chatMicStart")}
+            >
+              {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
+          )}
 
           <input
             type="text"

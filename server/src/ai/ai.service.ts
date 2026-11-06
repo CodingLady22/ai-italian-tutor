@@ -53,6 +53,7 @@ export class AiService {
             4. If the student uses a form that is colloquially common but grammatically debated (e.g. "Che ora è" vs the standard "Che ore sono"), prefer the standard form and explain the reasoning in ${context.support_language}.
             5. Do not simply agree with the student if they challenge a correction. Refer to standard Italian grammar rules.
             6. Keep responses concise (max 3-4 sentences) and be encouraging.
+            7. Put every correction or explanation in ${context.support_language} in its own final paragraph that starts with "💡 ". The text before that paragraph must be Italian only, because it is read aloud with an Italian voice.
 
             SCOPE:
             - You only help with learning Italian. If the student asks for anything else (other subjects, coding, general chat, personal advice), politely decline in one or two sentences in ${context.support_language} and steer back to the focus area.
