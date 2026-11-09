@@ -26,7 +26,7 @@ export const LOGIN_THROTTLE = { limit: 10, ttl: 60_000 };
 export const START_SESSION_THROTTLE = { limit: 5, ttl: 60_000 };
 export const SEND_MESSAGE_THROTTLE = { limit: 15, ttl: 60_000 };
 
-export const AI_MODEL = 'gemini-2.5-flash-lite';
+export const AI_MODEL = 'gemini-3.5-flash-lite';
 export const AI_REQUEST_TIMEOUT_MS = 20_000;
 export const AI_RETRY_DELAY_MS = 500;
 export const AI_HISTORY_LIMIT = 20;
