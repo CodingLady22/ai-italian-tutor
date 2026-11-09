@@ -17,7 +17,7 @@ Instructions for coding agents working on **AI Italian Tutor**. Read this first,
 | Frontend | React 19 (Vite, JavaScript) + Tailwind 3 | Vercel |
 | Backend | NestJS 11 (TypeScript) | Railway (Railpack builder, root directory = repo root, config file `/railway.json`) |
 | Database | MongoDB (Mongoose) | — |
-| AI | Google Gemini (`gemini-2.5-flash-lite`, via `@google/genai`) | — |
+| AI | Google Gemini (`gemini-3.5-flash-lite`, via `@google/genai`) | — |
 | Auth | JWT (bearer token) via Passport | — |
 | Voice | Web Speech API (browser, Chrome/Edge only) | — |
 | Email | Resend (not implemented yet, see tracker) | — |

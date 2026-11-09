@@ -1,48 +1,47 @@
-# Memory — AI Italian Tutor: fix/voice-ux (PR #35)
+# Memory — AI Italian Tutor: docs/readme
 
-Last updated: 2026-11-06
+Last updated: 2026-11-09
 
 ## What was built
 
-- `chore/ci` (PR #34) and `chore/og-image` (PR #33) are merged. CI is `.github/workflows/ci.yml`: build-only jobs for client and server on push to `main` and on PRs. Tests and lint were left out on purpose until `chore/tests-lint` (3 scaffold specs fail, server ESLint config broken).
-- Branch `fix/voice-ux` is committed and pushed, PR #35 open (closes #19, #20, #21):
-  - `client/src/components/ChatInterface.jsx`: inline voice errors, mic hidden when unsupported, recognizer aborted on unmount, voices loaded on `voiceschanged`, speech cancelled on unmount and session switch, failed send keeps its bubble as "Not sent" with Retry, stable keys.
-  - `client/src/utils/speakableText.js` (new): reads only the text before the 💡 marker.
-  - `client/src/i18n/translations.js`: 9 new keys in all 7 languages.
-  - `server/src/ai/ai.service.ts`: prompt rule 7, corrections go in a final paragraph starting with "💡 ". `ai.service.spec.ts` updated (17 tests pass).
+- `chore/tests-lint` is merged to main (owner confirmed). Branch 7 is done.
+- Branch `docs/readme` (from up-to-date `main`), closes #27:
+  - `README.md` rewritten: features, stack table, mermaid architecture and message flow, backend and frontend setup, env var tables, scripts, API table with rate limits, Vercel and Railway deployment notes, limitations, roadmap, screenshot, MIT license section.
+  - `LICENSE` (MIT, 2026, Maye Jesuorobo) added; `server/package.json` license set to `MIT`.
+  - `docs/screenshots/ai-italian-tutor.vercel.app.png` (added by the owner) is linked from the README.
+  - `server/src/common/constants.ts`: owner changed `AI_MODEL` to `gemini-3.5-flash-lite`. It is committed in this branch as its own commit (owner's instruction).
+  - Docs updated to `gemini-3.5-flash-lite`: `AGENTS.md`, `project-overview.md`, tracker. The audit report is left as is (historical). The deleted `GET /` stub row is removed from the overview.
 
 ## Decisions made
 
-- Corrections use the 💡 final-paragraph convention. If the model skips it, the whole reply is spoken as a fallback.
-- The mic stays visible and clickable after a permission error, so the user can retry once they allow it.
-- Email verification is still skipped for the demo, and the post must not mention email. Branch 5 is deferred.
-- PR descriptions mention only `client/` and `server/` files: no docs, `AGENTS.md`, `memory.md` or tracker. Always branch first. Use `.github/pull_request_template.md`.
+- Model is `gemini-3.5-flash-lite`. The code is the source of truth (`AI_MODEL`).
+- License is MIT.
+- The refresh-loses-chat bug stays in `chore/cleanup`. Email verification is revisited after the demo (still skipped for it; the post must not mention email).
+- PR descriptions mention only `client/` and `server/` files: here that is `server/package.json` and `server/src/common/constants.ts`. Never mention docs, README, LICENSE, `AGENTS.md`, `memory.md` or the tracker. Use `.github/pull_request_template.md`.
 - Still in place: free tier stays at 5, env var names are not renamed, `shared/constants.json` is the shared source, Railway root directory = repo root with config file `/railway.json`.
 
 ## Problems solved
 
-- A 400 on `send-message` locally meant the account's saved Gemini key was rejected (the server only returns 400 for the user-key path; the app key gives 502). Re-saving a valid key in Settings fixed it. Possible cause: the key was encrypted under a different `ENCRYPTION_KEY`.
-- A Python or heredoc edit with many quotes failed in the Bash tool; use the Edit tool for large JSX edits.
+- README claimed Gemini 1.5 Flash, and later the docs said 2.5. The code had already moved to 3.5, so check `server/src/common/constants.ts` before writing a model name anywhere.
 - Python doc edits on Windows need `encoding='utf-8'`.
 
 ## Current state
 
-- Manually verified in Chrome: blocked-mic message, Retry after a network failure, 💡 paragraph with Italian-only speech, speech stops on session switch, mic hidden in Firefox.
-- Server tests: 57 of 60 pass; the 3 failing suites are old scaffolds (#24). Client lint and build are clean.
-- Not tested: Edge, Safari, non-English UI languages. One unexplained, unreproduced case where a user bubble vanished after Retry; it worked correctly on the next try.
-- Not yet verified: `trust proxy: 1` on live (owner will test: 11 wrong `POST /auth/login` in a minute from one network should give 429 on the 11th, and a second network should not be blocked). Leave unticked until the owner reports.
-- Refreshing a chat returns to the new-chat screen (selected session is React state only). Logged in the tracker for `chore/cleanup`, not fixed.
-- Still open: server ESLint config (#25), tests (#24).
+- Docs and README are done. The tracker marks branch 8 ✅ (ready for PR).
+- The README setup steps were not run end to end. `cp .env.example .env` works in Git Bash but not plain PowerShell. The Vercel setting "Include source files outside of the Root Directory" is mentioned in the README but not verified against the real project.
+- Not verified: `trust proxy: 1` live (owner will test: 11 wrong `POST /auth/login` in a minute from one network should give 429 on the 11th, a second network should not be blocked). Leave unticked until the owner reports. Branch 4 stays 🟡 until then.
+- Not yet checked: `/og-image.png` on Vercel and the LinkedIn Post Inspector preview.
+- Known and unfixed: refreshing a chat returns to the new-chat screen. Edge, Safari and non-English UI languages are untested for voice.
 
 ## Next session starts with
 
-1. Check PR #35's CI went green, merge it, then tick the branch 6 tasks in the tracker and mark it ✅ (#35).
-2. Confirm `/og-image.png` serves an image on Vercel and check the LinkedIn Post Inspector preview.
-3. Start branch 7 `chore/tests-lint` (#24, #25, #26) from an up-to-date `main`. After it, add test and lint steps to `ci.yml`.
-4. When the owner reports the `trust proxy` result, tick it and mark branch 4 done.
+1. Check the `docs/readme` PR's CI is green and merge it; mark branch 8 merged in the tracker.
+2. Get the `trust proxy` result from the owner, tick it and close branch 4.
+3. Check the `/og-image.png` and LinkedIn preview.
+4. Work through the pre-recording checklist (wake Railway, test production with a throwaway account, console clean at 375 px, budget alert on the Gemini project), then record in Chrome or Edge.
+5. Phase 2 afterwards, starting with `chore/cleanup` if the refresh bug matters.
 
 ## Open questions
 
-- Fix the refresh-loses-chat issue before the demo, or leave it for `chore/cleanup`?
 - `trust proxy` result is pending from the owner.
-- Whether to revisit email verification after the demo.
+- Whether to add a Phase 2 branch for a screenshot GIF or more screenshots.

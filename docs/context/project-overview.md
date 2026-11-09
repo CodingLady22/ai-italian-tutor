@@ -27,7 +27,7 @@ A web app where learners practise Italian by chatting with an AI tutor. The tuto
 flowchart LR
   U[Browser<br/>React + Tailwind<br/>Web Speech API] -->|HTTPS + JWT| API[NestJS API<br/>Railway]
   API --> DB[(MongoDB)]
-  API -->|prompt + history| G[Google Gemini<br/>gemini-2.5-flash-lite]
+  API -->|prompt + history| G[Google Gemini<br/>gemini-3.5-flash-lite]
   API -.->|planned| R[Resend<br/>email]
 ```
 
@@ -62,7 +62,6 @@ flowchart LR
 | DELETE | `/chat/sessions/:id` | Delete a session and its messages (owner only) |
 | PUT | `/users/api-key` | Save own Gemini key (checked with Gemini first; 400 if invalid) |
 | PUT | `/users/language` | Change support language |
-| GET | `/` | "Hello" stub |
 | GET | `/health` | Health check for Railway, returns `{status:'ok'}`, not rate-limited |
 
 All other routes are limited to 60 requests per minute per IP. Limits live in `server/src/common/constants.ts`; the app trusts one proxy hop (`trust proxy`) so the limiter sees real client IPs on Railway. All routes under `/chat` and `/users` require the JWT; `:id` params must be valid Mongo ids. Routes match the controllers in `server/src`; keep this table up to date.
@@ -97,7 +96,7 @@ Branches are done in order, one at a time. Details and status are in `progress-t
 | 4 | `chore/deploy-config` | SPA routing on Vercel, env docs, real title/favicon/OG tags, health check | #16, #17, #23, #29 |
 | 5 | `feature/email-verification` | Verify emails with Resend; clean up unused email env vars | #3 |
 | 6 | `fix/voice-ux` ✅ | Visible voice errors, browser support handling, send-failure state | #19, #20, #21 |
-| 7 | `chore/tests-lint` | Working tests and lint, dead code removed | #24, #25, #26 |
+| 7 | `chore/tests-lint` ✅ | Working tests and lint, dead code removed | #24, #25, #26 |
 | 8 | `docs/readme` | README with setup, architecture, screenshots, env table | #27 |
 
 ### Phase 2: After the demo
