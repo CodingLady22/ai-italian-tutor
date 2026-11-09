@@ -45,7 +45,7 @@ app/                       git repository root
     src/
       main.ts              bootstrap, CORS, trust proxy, global ValidationPipe
       app.module.ts
-      app.controller.ts    root "Hello" stub
+      app.controller.ts    GET /health (Railway health check)
       auth/                auth.controller/service/module, jwt.strategy.ts, dto/, schema/user.schema.ts
       users/               users.controller/service/module, dto/
       chat/                chat.controller/service/module, dto/create-chat.dto.ts, schema/
@@ -77,8 +77,8 @@ npm run start:dev      # dev server, default port 3000
 npm run build          # output: dist/server/src/main.js (start:prod runs it)
 npm test               # unit tests
 npm run test:e2e       # e2e tests
-npm run lint           # WARNING: currently runs with --fix and the config is broken (see #25).
-                       # Until the split in branch 7, run: npx eslint "src/**/*.ts"
+npm run lint           # check only, no changes
+npm run lint:fix       # same rules, applies auto-fixes
 
 # client
 cd app/client

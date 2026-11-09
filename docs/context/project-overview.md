@@ -96,7 +96,7 @@ Branches are done in order, one at a time. Details and status are in `progress-t
 | 3 | `fix/auth-ux` ✅ | Login errors stay visible, no crash on bad storage | #2, #10 |
 | 4 | `chore/deploy-config` | SPA routing on Vercel, env docs, real title/favicon/OG tags, health check | #16, #17, #23, #29 |
 | 5 | `feature/email-verification` | Verify emails with Resend; clean up unused email env vars | #3 |
-| 6 | `fix/voice-ux` | Visible voice errors, browser support handling, send-failure state | #19, #20, #21 |
+| 6 | `fix/voice-ux` ✅ | Visible voice errors, browser support handling, send-failure state | #19, #20, #21 |
 | 7 | `chore/tests-lint` | Working tests and lint, dead code removed | #24, #25, #26 |
 | 8 | `docs/readme` | README with setup, architecture, screenshots, env table | #27 |
 
@@ -108,4 +108,3 @@ Branches are done in order, one at a time. Details and status are in `progress-t
 | `feature/streaming` | Stream replies (SSE) so the tutor feels fast | — |
 | `feature/session-summary` | End-of-session card showing mistakes by grammar topic | — |
 | `chore/cleanup` | i18n for remaining strings, split `Dashboard.jsx`, httpOnly cookie auth, code-splitting | #22, #26, #9, #28 |
-| `chore/ci` | GitHub Actions running tests and lint on every PR | — |
