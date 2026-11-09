@@ -1,6 +1,6 @@
 # Progress Tracker
 
-**Current branch:** `chore/tests-lint`
+**Current branch:** `docs/readme`
 **Phase:** 1 (demo-ready)
 **Last updated:** 2026-11-09
 
@@ -56,14 +56,16 @@ Status key: ⬜ not started · 🟡 in progress · ✅ merged
 - [x] #20 Wait for `voiceschanged`; speak only the Italian part; `speechSynthesis.cancel()` on unmount/session switch
 - [x] #21 Error + retry state for failed sends; avoid duplicate messages; stable `key` (no `Math.random()`)
 
-### 7. `chore/tests-lint` 🟡 (code done, PR not opened yet)
+### 7. `chore/tests-lint` ✅ (merged)
 - [x] #24 Mock Mongoose models with `getModelToken`; replace empty scaffold tests; all suites pass (11 suites, 66 tests; e2e passes)
 - [x] #25 Fix `eslint.config.mjs`; split `lint` and `lint:fix`
 - [x] #26 Remove unused imports and dependencies, `AppController` stub, duplicate `UsersService` provider (the `Dashboard` split and the `CreateUserDto` merge stay in `chore/cleanup`)
 - [x] Add lint and test steps to `ci.yml` (formerly the separate `chore/ci` follow-up)
 
-### 8. `docs/readme` ⬜
-- [ ] #27 Correct Gemini model name; client + server setup; env var table; architecture diagram; screenshots/GIF; deployment notes; license
+### 8. `docs/readme` ✅ (ready to commit and open PR)
+- [x] #27 Correct Gemini model name; client + server setup; env var table; architecture diagram; deployment notes
+- [x] Screenshot added in `docs/screenshots/` and linked in README
+- [x] License: MIT (`LICENSE`, README section, `server/package.json`)
 
 ### Pre-recording checklist
 - [ ] Wake the Railway service before recording
@@ -103,6 +105,7 @@ Newest first.
 
 | Date | Branch | What changed | Files touched |
 |---|---|---|---|
+| 2026-11-09 | `docs/readme` | #27 README rewritten: correct model (`gemini-3.5-flash-lite`), features, stack table, architecture diagram and message flow, client + server setup, env var tables, scripts, full API table with rate limits, Vercel/Railway deployment notes (incl. root directory and `shared/` caveats), limitations, roadmap. Screenshot linked; MIT `LICENSE` added and `server/package.json` license set to MIT. Model name is `gemini-3.5-flash-lite` everywhere in the docs (matches `AI_MODEL` in `server/src/common/constants.ts`). `project-overview.md`: removed the deleted `GET /` stub from the endpoint table | `README.md`, `LICENSE`, `server/package.json`, `docs/screenshots/`, docs |
 | 2026-11-09 | `chore/tests-lint` | #24 the 3 failing scaffold specs (`users.service`, `auth.controller`, `chat.controller`) replaced with real tests that mock the Mongoose models (`getModelToken`) and services; 11 suites / 66 tests pass, e2e passes (now checks `/health`). #25 `eslint.config.mjs` rewritten as an ESM flat config (typescript-eslint + eslint-config-prettier; Prettier formatting is not enforced, to avoid reformatting untouched files); `lint` is check-only, new `lint:fix` applies fixes. #26 removed the unused `User` import, the `AppController` "Hello" route and `AppService`, the duplicate `UsersService` provider in `AppModule`, and unused dependencies (server: `@nestjs/axios`, `axios`, `dotenv`, `resend`, `@nestjs/mapped-types`, `@eslint/eslintrc`; client: `dotenv`). `resend` will be added back with `feature/email-verification`. CI now also runs lint (client + server) and server tests. Server lint, tests, `tsc` and build clean; client lint clean | `server/eslint.config.mjs`, `server/package.json`, `server/package-lock.json`, `server/src/app.controller.ts`, `app.controller.spec.ts`, `app.module.ts`, `app.service.ts` (deleted), `auth/auth.service.ts`, `auth/auth.controller.spec.ts`, `chat/chat.controller.spec.ts`, `users/users.service.spec.ts`, `server/test/app.e2e-spec.ts`, `client/package.json`, `client/package-lock.json`, `.github/workflows/ci.yml`, docs |
 | 2026-11-04 | `fix/voice-ux` | #19 voice input errors (`not-allowed`, `no-speech`, `network`, other) show an inline message instead of `alert()`/console only; `start()` wrapped in try/catch; mic hidden when SpeechRecognition is missing, speaker hidden when speechSynthesis is missing; recognizer aborted on unmount. #20 voices kept fresh via `voiceschanged`; only the Italian part is spoken (tutor prompt rule 7 puts corrections in a final paragraph starting with 💡, the client stops reading at it); speech cancelled on unmount and session switch. #21 a failed send marks the user bubble "Not sent" with a Retry button (no duplicate bubble, the server saves nothing on failure); stable `key`; error cleared on session switch. Mic/speaker titles and 9 new strings moved to i18n in all 7 languages. Client lint and build clean; prompt tests updated and passing (17). Not tested in a real browser yet | `client/src/components/ChatInterface.jsx`, `client/src/utils/speakableText.js`, `client/src/i18n/translations.js`, `server/src/ai/ai.service.ts`, `server/src/ai/ai.service.spec.ts`, docs |
 | 2026-11-02 | `chore/og-image` | Link-preview image for LinkedIn: `og:image`, `og:image:width/height`, `og:url`, `twitter:image` pointing at the final Vercel domain; `twitter:card` is now `summary_large_image`. New `client/public/og-image.png` (1200x568). `/dashboard` and `/login` verified to return 200 on Vercel. `trust proxy` check still pending | `client/index.html`, `client/public/og-image.png`, docs |
